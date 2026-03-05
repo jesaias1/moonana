@@ -1,0 +1,78 @@
+﻿
+> banana-atelier@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+node.exe : Failed to 
+compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Users\lin4s\AppData
+\Roaming\ ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Failed to com   
+ pile.:String) [],     
+RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+
+./app/page.tsx
+Error: 
+  [31mx[0m You're 
+importing a component 
+that needs useState. 
+It only works in a 
+Client Component but 
+none of its parents 
+are marked with "use 
+client", so they're 
+Server Components by 
+default.
+  [31m|[0m Learn 
+more: https://nextjs.or
+g/docs/getting-started/
+react-essentials
+  [31m|[0m 
+  [31m|[0m 
+   ,-[[36;1;4mC:\Users
+\lin4s\.gemini\antigrav
+ity\scratch\nano-banana
+-studio\app\page.tsx[0
+m:1:1]
+ [2m1[0m | import 
+React, { useState } 
+from 'react';
+   : [31;1m           
+     ^^^^^^^^[0m
+ [2m2[0m | import 
+SettingsPanel from '@/c
+omponents/SettingsPanel
+';
+ [2m3[0m | import 
+ReferenceImages from '@
+/components/ReferenceIm
+ages';
+ [2m3[0m | import 
+CharacterPanel from '@/
+components/CharacterPan
+el';
+   `----
+
+Import trace for 
+requested module:
+./app/page.tsx
+
+
+> Build failed because 
+of webpack errors
