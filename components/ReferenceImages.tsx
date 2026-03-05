@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useCallback, useRef } from 'react';
-import { Upload, X, ImagePlus } from 'lucide-react';
+import { Upload, X, ImagePlus, Wand2 } from 'lucide-react';
 import { ReferenceImage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 interface ReferenceImagesProps {
   images: ReferenceImage[];
   onChange: (images: ReferenceImage[]) => void;
+  onGeneratePrompt?: (base64: string) => void;
   maxImages?: number;
 }
 
@@ -49,7 +50,7 @@ const downscaleImage = (file: File, maxWidth: number = 1024): Promise<string> =>
   });
 };
 
-export default function ReferenceImages({ images, onChange, maxImages = 5 }: ReferenceImagesProps) {
+export default function ReferenceImages({ images, onChange, onGeneratePrompt, maxImages = 5 }: ReferenceImagesProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,12 +144,22 @@ export default function ReferenceImages({ images, onChange, maxImages = 5 }: Ref
                    placeholder="e.g. Main Subject, Background"
                    className="w-full bg-panel border-b border-panelBorder px-2 py-1 text-xs text-foreground focus:outline-none focus:border-accent"
                  />
-                 <button 
-                   onClick={() => removeImage(img.id)}
-                   className="self-end text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
-                 >
-                   <X className="w-3 h-3" /> Remove
-                 </button>
+                 <div className="flex items-center gap-3 self-end mt-1">
+                   {onGeneratePrompt && (
+                     <button 
+                       onClick={() => onGeneratePrompt(img.base64)}
+                       className="text-xs text-yellow-400 hover:text-yellow-300 flex items-center gap-1 font-medium transition-colors"
+                     >
+                       <Wand2 className="w-3 h-3" /> Auto-Prompt
+                     </button>
+                   )}
+                   <button 
+                     onClick={() => removeImage(img.id)}
+                     className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 font-medium transition-colors"
+                   >
+                     <X className="w-3 h-3" /> Remove
+                   </button>
+                 </div>
                </div>
             </div>
           ))}

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getSession } from '@/lib/auth';
 import { db } from '@/db';
 import { usersTable, generationsTable } from '@/db/schema';
@@ -9,9 +10,14 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const session = await getSession();
+    const adminSession = cookies().get('admin_session');
 
     // Secure the admin route
-    if (!session || session.role !== 'admin') {
+    let isAdmin = false;
+    if (session && session.role === 'admin') isAdmin = true;
+    if (adminSession && adminSession.value === 'true') isAdmin = true;
+
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 });
     }
 

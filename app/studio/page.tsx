@@ -136,6 +136,28 @@ export default function Home() {
     }
   };
 
+  const handleGeneratePrompt = async (base64: string) => {
+    setIsLoading(true);
+    toast('Analyzing image context via Gemini Vision...', 'info');
+    try {
+      const res = await fetch('/api/generate-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate prompt');
+      
+      handleSettingChange('prompt', data.prompt);
+      toast('Prompt successfully extracted and applied!', 'success');
+    } catch (err: unknown) {
+      console.error(err);
+      toast(err instanceof Error ? err.message : 'Unknown error', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -210,6 +232,7 @@ export default function Home() {
             <ReferenceImages 
               images={settings.references} 
               onChange={(imgs) => handleSettingChange('references', imgs)} 
+              onGeneratePrompt={handleGeneratePrompt}
             />
           </div>
           <div className={cn("p-6 h-full", activeTab === 'characters' ? 'block' : 'hidden')}>
