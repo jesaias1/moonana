@@ -118,9 +118,15 @@ export default function LandingPage() {
               <div>
                 <h3 className="text-2xl font-bold mb-2">Moonana Tokens <span className="text-accent bg-accent/10 px-2 py-0.5 rounded text-sm ml-2">PRO</span></h3>
                 <p className="text-gray-400 mb-6">Fuel your creativity without subscription traps.</p>
-                <div className="flex items-baseline gap-2 mb-6 text-white">
-                  <span className="text-5xl font-extrabold">$2</span>
-                  <span className="text-gray-500 font-medium tracking-wide uppercase text-sm">/ 100 images</span>
+                <div className="flex flex-col mb-6 text-white bg-white/5 p-5 rounded-2xl border border-white/10">
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-5xl font-extrabold text-green-400">10 Free</span>
+                    <span className="text-gray-300 font-medium tracking-wide uppercase text-sm">Generations</span>
+                  </div>
+                  <div className="flex items-baseline gap-2 pt-3 border-t border-white/10">
+                    <span className="text-2xl font-bold">$2</span>
+                    <span className="text-gray-500 font-medium uppercase text-xs">/ 100 images thereafter</span>
+                  </div>
                 </div>
                 <ul className="space-y-3">
                   {['High-speed Gemini Flash generations', 'Unlimited local history', 'Custom style presets', 'Composition enforcement tools'].map((feature, i) => (
