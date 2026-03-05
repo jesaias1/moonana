@@ -109,21 +109,21 @@ export default function LandingPage() {
       <section id="pricing" className="py-24 px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">Simple, Transparent Pricing</h2>
-          <p className="text-gray-400 mb-12">Bring your own Google Gemini API key. We just provide the ultimate studio.</p>
+          <p className="text-gray-400 mb-12">Get 10 free generations on sign up. Purchase tokens to continue creating.</p>
 
           <div className="bg-gradient-to-br from-panel to-background border border-panelBorder rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-left">
             <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-[80px] rounded-full pointer-events-none" />
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
               <div>
-                <h3 className="text-2xl font-bold mb-2">Moonana Studio <span className="text-accent bg-accent/10 px-2 py-0.5 rounded text-sm ml-2">PRO</span></h3>
-                <p className="text-gray-400 mb-6">Current early access pricing.</p>
+                <h3 className="text-2xl font-bold mb-2">Moonana Tokens <span className="text-accent bg-accent/10 px-2 py-0.5 rounded text-sm ml-2">PRO</span></h3>
+                <p className="text-gray-400 mb-6">Fuel your creativity without subscription traps.</p>
                 <div className="flex items-baseline gap-2 mb-6 text-white">
-                  <span className="text-5xl font-extrabold">$0</span>
-                  <span className="text-gray-500 font-medium tracking-wide uppercase text-sm">/ forever</span>
+                  <span className="text-5xl font-extrabold">$2</span>
+                  <span className="text-gray-500 font-medium tracking-wide uppercase text-sm">/ 100 images</span>
                 </div>
                 <ul className="space-y-3">
-                  {['Unlimited local history', 'Custom style presets', 'Composition enforcement tools', 'Bring your own API Key'].map((feature, i) => (
+                  {['High-speed Gemini Flash generations', 'Unlimited local history', 'Custom style presets', 'Composition enforcement tools'].map((feature, i) => (
                     <li key={i} className="flex items-center gap-3 text-gray-300">
                       <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">✓</div>
                       {feature}
