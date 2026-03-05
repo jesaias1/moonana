@@ -8,6 +8,7 @@ import Link from 'next/link';
 export default function AdminDashboard() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeView, setActiveView] = useState<'analytics' | 'subscriptions'>('analytics');
+  const [stats, setStats] = useState({ activeUsers: 0, totalGenerations: 0, status: 'Initializing...' });
   const router = useRouter();
 
   useEffect(() => {
@@ -15,10 +16,20 @@ export default function AdminDashboard() {
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
-        if (!data.user) {
+        if (!data.user || data.user.role !== 'admin') {
            router.push('/login');
         } else {
            setIsCheckingAuth(false);
+           fetch('/api/admin/stats')
+             .then(r => r.json())
+             .then(s => {
+                if (!s.error) {
+                  setStats(s);
+                } else {
+                  setStats(prev => ({ ...prev, status: 'API Error' }));
+                }
+             })
+             .catch(() => setStats(prev => ({ ...prev, status: 'Network Error' })));
         }
       })
       .catch(() => router.push('/login'));
@@ -90,17 +101,17 @@ export default function AdminDashboard() {
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-panel border border-panelBorder rounded-2xl p-6">
                  <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Generations</span>
-                 <div className="text-4xl font-extrabold mt-3">8,492</div>
+                 <div className="text-4xl font-extrabold mt-3">{stats.totalGenerations.toLocaleString()}</div>
               </div>
               <div className="bg-panel border border-panelBorder rounded-2xl p-6">
                  <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Active Users</span>
-                 <div className="text-4xl font-extrabold mt-3 text-green-400">1 (You)</div>
+                 <div className="text-4xl font-extrabold mt-3 text-green-400">{stats.activeUsers.toLocaleString()}</div>
               </div>
               <div className="bg-panel border border-panelBorder rounded-2xl p-6 relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full" />
                  <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider relative z-10">System Status</span>
                  <div className="text-xl font-bold mt-4 text-white flex items-center gap-2 relative z-10">
-                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" /> Operational
+                   <div className={`w-3 h-3 rounded-full ${stats.status === 'Operational' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} /> {stats.status}
                  </div>
               </div>
             </div>

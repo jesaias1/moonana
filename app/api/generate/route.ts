@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GenerationSettings } from '@/lib/types';
+import { getSession } from '@/lib/auth';
+import { db } from '@/db';
+import { usersTable, generationsTable } from '@/db/schema';
+import { eq, sql } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
+import { put } from '@vercel/blob';
 
 export const maxDuration = 60; // Set Vercel max duration limit higher for generation
 export const dynamic = 'force-dynamic';
@@ -43,18 +49,35 @@ export async function POST(req: NextRequest) {
        return NextResponse.json({ error: 'Google API Key not configured properly in .env.local' }, { status: 500 });
     }
 
-    const ip = req.ip ?? req.headers.get('x-forwarded-for') ?? 'unknown'; // Token Limit Validation
-    const hasToken = checkAndConsumeToken(ip);
-    if (!hasToken) {
-      return NextResponse.json(
-        { error: 'Token limit exhausted', code: 'PAYMENT_REQUIRED' },
-        { status: 402 } // HTTP 402 Payment Required
-      );
-    }
-    
     // Explicitly fallback to 'dummy' to satisfy Next.js static analyzers that might bypass the conditional return
     const genAI = new GoogleGenerativeAI(apiKey || 'dummy_build_token');
     const body: GenerationSettings = await req.json();
+
+    const session = await getSession();
+    const reqIp = req.ip ?? req.headers.get('x-forwarded-for') ?? 'unknown'; // Token Limit Validation
+    const requestedImages = body.numberOfImages || 1;
+
+    let hasToken = false;
+    let userId: string = '';
+    let currentDbTokens = 0;
+
+    if (session && typeof session.id === 'string') {
+      userId = session.id;
+      const userRecords = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+      if (userRecords.length > 0) {
+        currentDbTokens = userRecords[0].tokenBalance;
+        hasToken = currentDbTokens >= requestedImages;
+      }
+    } else {
+      hasToken = checkAndConsumeToken(reqIp); // old guest fallback
+    }
+
+    if (!hasToken) {
+      return NextResponse.json(
+        { error: 'Token limit exhausted. Please login or purchase more tokens.', code: 'PAYMENT_REQUIRED' },
+        { status: 402 } // HTTP 402 Payment Required
+      );
+    }
     
     if (!body.prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
@@ -88,7 +111,7 @@ export async function POST(req: NextRequest) {
     const results: string[] = [];
     
     // We generate images iteratively based on numberOfImages
-    for (let i = 0; i < body.numberOfImages; i++) {
+    for (let i = 0; i < requestedImages; i++) {
         const generationConfig: Record<string, unknown> = {};
         if (body.seed !== undefined && body.seed !== null) {
              generationConfig.seed = body.seed + i; // Offset seed for multiple outputs to avoid duplicate images
@@ -99,34 +122,67 @@ export async function POST(req: NextRequest) {
              generationConfig
         });
         
-        // Handle response extraction. The Gemini SDK for image generation typically returns parts with inlineData.
         const candidates = response.response.candidates;
         let base64Image = '';
         
         if (candidates && candidates.length > 0 && candidates[0].content?.parts?.[0]?.inlineData) {
             const data = candidates[0].content.parts[0].inlineData;
-            base64Image = `data:${data.mimeType};base64,${data.data}`;
+            base64Image = data.data; // Raw base64 payload
         } else {
-             // Fallback for models returning text payload representing base64 or JSON
              const responseText = response.response.text();
-             if (responseText.length > 500) { // arbitrary threshold for base64 vs error string
-                 if (responseText.startsWith('data:image')) {
-                     base64Image = responseText;
-                 } else {
-                     base64Image = `data:image/jpeg;base64,${responseText.trim()}`;
-                 }
+             if (responseText.length > 500) { 
+                 base64Image = responseText.replace(/^data:image\/\w+;base64,/, '');
              } else {
                  throw new Error("Could not parse image from model response, check API key permissions.");
              }
         }
         
         if (base64Image) {
-            results.push(base64Image);
+            // Convert base64 to buffer natively on Node Edge
+            const buffer = Buffer.from(base64Image, 'base64');
+            const blobId = randomUUID();
+            
+            // Push directly to Vercel Blob
+            const blob = await put(`generations/${blobId}.jpg`, buffer, {
+              access: 'public',
+              contentType: 'image/jpeg',
+            });
+
+            // Store the CDN URL natively
+            results.push(blob.url);
         }
     }
 
-    const currentTokens = tokenMap.get(ip)?.balance || 0;
-    return NextResponse.json({ images: results, tokensRemaining: currentTokens });
+    // Deduct tokens and log history if logged in
+    if (session && userId && results.length > 0) {
+      // Deduct exactly the amount we successfully generated
+      await db.update(usersTable)
+        .set({ tokenBalance: sql`${usersTable.tokenBalance} - ${results.length}` })
+        .where(eq(usersTable.id, userId));
+
+      // Asynchronously log the generations to PostgreSQL using the Blob CDN URL
+      try {
+         const generationInserts = results.map(url => ({
+           id: randomUUID(),
+           userId: userId,
+           prompt: body.prompt,
+           imageUrl: url, 
+         }));
+         await db.insert(generationsTable).values(generationInserts);
+      } catch (logErr) {
+         console.error("Failed to log generation history to DB:", logErr);
+      }
+    }
+
+    // Return the updated balance to the frontend
+    let finalTokensRemaining = 0;
+    if (session && userId) {
+       finalTokensRemaining = currentDbTokens - results.length;
+    } else {
+       finalTokensRemaining = tokenMap.get(reqIp)?.balance || 0;
+    }
+
+    return NextResponse.json({ images: results, tokensRemaining: finalTokensRemaining });
   } catch (err: unknown) {
     console.error('Generation Error:', err);
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to generate image' }, { status: 500 });

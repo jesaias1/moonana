@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getSession } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -17,9 +18,15 @@ export async function POST(req: Request) {
     const host = req.headers.get('host') || 'localhost:3000';
     const protocol = host.includes('localhost') ? 'http' : 'https';
 
+    const userSession = await getSession();
+
     // Create Checkout Sessions from body params.
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      metadata: {
+        userId: userSession?.id ? String(userSession.id) : 'anonymous',
+        tokens: '100',
+      },
       line_items: [
         {
           price_data: {
