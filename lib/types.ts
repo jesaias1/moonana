@@ -22,8 +22,8 @@ export interface GenerationSettings {
   activeCharacterIds: string[];
   compositionReferenceId?: string | null;
   compositionStrength?: 'Loose' | 'Strict' | 'Exact';
-  stylePresetId?: string;
-  styleModifier?: string;
+  stylePresetIds?: string[];
+  styleModifiers?: string[];
   styleReference?: ReferenceImage | null;
   styleStrength?: 'Light' | 'Medium' | 'Strong';
   useCompiledPrompt?: boolean;

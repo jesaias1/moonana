@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { History as HistoryIcon, RotateCcw, Image as ImageIcon } from 'lucide-react';
+import { History as HistoryIcon, RotateCcw, ImageIcon, Download, BookmarkPlus } from 'lucide-react';
 import { GenerationHistoryEntry, GenerationSettings } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -12,6 +12,54 @@ interface HistoryProps {
 export default function HistoryPanel({ onRestore }: HistoryProps) {
   const [history, setHistory] = useState<GenerationHistoryEntry[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleDownload = async (imageUrl: string, index: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `moonana_generation_${index}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Failed to download image:', err);
+    }
+  };
+
+  const handleSaveAsPreset = (settings: GenerationSettings, event: React.MouseEvent) => {
+    event.stopPropagation();
+    // Use prompt as name, or "History Preset" if empty
+    const presetName = settings.prompt.trim().slice(0, 20) || 'History Preset';
+    
+    // Attempt to pull existing preset from local storage to not overwrite others
+    let customPresets = [];
+    try {
+      const saved = localStorage.getItem('banana_styles');
+      if (saved) customPresets = JSON.parse(saved);
+    } catch { /* ignore */ }
+
+    // Create a synthesized modifier string from prompt and existing modifiers
+    let synthModifier = settings.prompt.trim();
+    if (settings.styleModifiers && settings.styleModifiers.length > 0) {
+       synthModifier += ', ' + settings.styleModifiers.join(', ');
+    }
+
+    const newPreset = {
+      id: Math.random().toString(36).substring(7),
+      name: presetName,
+      modifier: synthModifier,
+      isCustom: true
+    };
+
+    customPresets.push(newPreset);
+    localStorage.setItem('banana_styles', JSON.stringify(customPresets));
+    alert('Saved as custom preset! Refresh or open styles panel to see it.');
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('banana_history');
@@ -55,14 +103,22 @@ export default function HistoryPanel({ onRestore }: HistoryProps) {
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 {entry.images.length > 0 ? (
                   entry.images.map((img, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img 
-                      key={i} 
-                      src={img} 
-                      alt={`History ${i}`} 
-                      loading="lazy"
-                      className="w-16 h-16 object-cover rounded-md border border-panelBorder flex-shrink-0 bg-background" 
-                    />
+                    <div key={i} className="relative group/img shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={img} 
+                        alt={`History ${i}`} 
+                        loading="lazy"
+                        className="w-16 h-16 object-cover rounded-md border border-panelBorder flex-shrink-0 bg-background" 
+                      />
+                      <button 
+                        onClick={(e) => handleDownload(img, i, e)}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center rounded-md transition-opacity"
+                        title="Download Image"
+                      >
+                        <Download className="w-4 h-4 text-white hover:text-accent transition-colors" />
+                      </button>
+                    </div>
                   ))
                 ) : (
                   <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-panelBorder bg-panel flex items-center justify-center">
@@ -84,13 +140,20 @@ export default function HistoryPanel({ onRestore }: HistoryProps) {
                 </div>
               </div>
 
-              <button 
-                onClick={() => onRestore(entry.settings)}
-                className="shrink-0 p-2 text-gray-400 hover:text-accent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs font-medium"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Restore
-              </button>
+              <div className="flex flex-col items-end gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onRestore(entry.settings); }}
+                  className="p-1 text-gray-400 hover:text-accent flex items-center gap-1 text-[10px] font-medium"
+                >
+                  <RotateCcw className="w-3 h-3" /> Restore
+                </button>
+                <button 
+                  onClick={(e) => handleSaveAsPreset(entry.settings, e)}
+                  className="p-1 text-gray-400 hover:text-accent flex items-center gap-1 text-[10px] font-medium"
+                >
+                  <BookmarkPlus className="w-3 h-3" /> Save Preset
+                </button>
+              </div>
             </div>
           ))}
         </div>

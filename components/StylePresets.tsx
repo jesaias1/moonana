@@ -52,14 +52,23 @@ export default function StylePresets({ settings, onChange }: StylePresetsProps) 
   }, [customPresets]);
 
   const togglePreset = (preset: StylePreset) => {
-    if (settings.stylePresetId === preset.id) {
+    const currentIds = settings.stylePresetIds || [];
+    const currentModifiers = settings.styleModifiers || [];
+    
+    if (currentIds.includes(preset.id)) {
       // Deselect
-      onChange('stylePresetId', undefined);
-      onChange('styleModifier', undefined);
+      onChange('stylePresetIds', currentIds.filter(id => id !== preset.id));
+      onChange('styleModifiers', currentModifiers.filter(mod => mod !== preset.modifier));
     } else {
       // Select
-      onChange('stylePresetId', preset.id);
-      onChange('styleModifier', preset.modifier);
+      if (currentIds.length >= 3) {
+        // Either ignore or show toast. Let's just ignore for now, or replace the oldest?
+        // Let's replace the first one if we hit 3 to keep it simple, or just prevent adding.
+        // We will prevent adding.
+        return;
+      }
+      onChange('stylePresetIds', [...currentIds, preset.id]);
+      onChange('styleModifiers', [...currentModifiers, preset.modifier]);
     }
   };
 
@@ -80,10 +89,14 @@ export default function StylePresets({ settings, onChange }: StylePresetsProps) 
 
   const deleteCustom = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const presetToDelete = customPresets.find(p => p.id === id);
     setCustomPresets(prev => prev.filter(p => p.id !== id));
-    if (settings.stylePresetId === id) {
-      onChange('stylePresetId', undefined);
-      onChange('styleModifier', undefined);
+    
+    if (settings.stylePresetIds?.includes(id)) {
+      onChange('stylePresetIds', settings.stylePresetIds.filter(pid => pid !== id));
+      if (presetToDelete) {
+        onChange('styleModifiers', (settings.styleModifiers || []).filter(mod => mod !== presetToDelete.modifier));
+      }
     }
   };
 
@@ -142,7 +155,7 @@ export default function StylePresets({ settings, onChange }: StylePresetsProps) 
 
       <div className="grid grid-cols-2 gap-2">
         {allPresets.map(preset => {
-          const isActive = settings.stylePresetId === preset.id;
+          const isActive = settings.stylePresetIds?.includes(preset.id) || false;
           return (
             <div 
               key={preset.id}

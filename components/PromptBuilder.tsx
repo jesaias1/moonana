@@ -50,8 +50,11 @@ export default function PromptBuilder({ settings, onChange }: PromptBuilderProps
     }
 
     // 2.5 Composition Instructions
-    if (settings.compositionReferenceId && settings.references) {
-      const compRef = settings.references.find(r => r.id === settings.compositionReferenceId);
+    if (settings.references && settings.references.length > 0) {
+      // Use explicit composition reference, or fallback to the first provided reference
+      const compRefId = settings.compositionReferenceId || settings.references[0].id;
+      const compRef = settings.references.find(r => r.id === compRefId);
+      
       if (compRef) {
         const labelText = compRef.label ? ` labeled '${compRef.label}'` : '';
         const strength = settings.compositionStrength || 'Strict';
@@ -65,8 +68,8 @@ export default function PromptBuilder({ settings, onChange }: PromptBuilderProps
     }
 
     // 3. Style Presets
-    if (settings.styleModifier) {
-      finalPrompt += `\n\nStyle: ${settings.styleModifier}`;
+    if (settings.styleModifiers && settings.styleModifiers.length > 0) {
+      finalPrompt += `\n\nStyles: ${settings.styleModifiers.join(', ')}`;
     }
 
     // 4. Negative Prompt
@@ -86,7 +89,7 @@ export default function PromptBuilder({ settings, onChange }: PromptBuilderProps
     settings.prompt, 
     settings.styleReference, 
     settings.styleStrength,
-    settings.styleModifier, 
+    settings.styleModifiers, 
     settings.negativePrompt,
     settings.resolution,
     settings.aspectRatio,

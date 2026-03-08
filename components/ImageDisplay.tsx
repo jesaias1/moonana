@@ -71,7 +71,7 @@ export default function ImageDisplay({ images, isLoading }: ImageDisplayProps) {
         </div>
       )}
 
-      {images.length > 0 && (
+      {!isLoading && images.length > 0 && (
         <div className={cn(
           "w-full h-full grid gap-6 content-start",
           images.length === 1 && "grid-cols-1",

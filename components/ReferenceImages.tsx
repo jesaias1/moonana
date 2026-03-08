@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 interface ReferenceImagesProps {
   images: ReferenceImage[];
   onChange: (images: ReferenceImage[]) => void;
+  compositionId?: string | null;
+  onSetComposition?: (id: string | null) => void;
   onGeneratePrompt?: (base64: string) => void;
   maxImages?: number;
 }
@@ -50,7 +52,7 @@ const downscaleImage = (file: File, maxWidth: number = 1024): Promise<string> =>
   });
 };
 
-export default function ReferenceImages({ images, onChange, onGeneratePrompt, maxImages = 5 }: ReferenceImagesProps) {
+export default function ReferenceImages({ images, onChange, compositionId, onSetComposition, onGeneratePrompt, maxImages = 5 }: ReferenceImagesProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +91,9 @@ export default function ReferenceImages({ images, onChange, onGeneratePrompt, ma
 
   const removeImage = (id: string) => {
     onChange(images.filter(img => img.id !== id));
+    if (compositionId === id && onSetComposition) {
+      onSetComposition(null);
+    }
   };
 
   const updateLabel = (id: string, label: string) => {
@@ -144,6 +149,21 @@ export default function ReferenceImages({ images, onChange, onGeneratePrompt, ma
                    placeholder="e.g. Main Subject, Background"
                    className="w-full bg-panel border-b border-panelBorder px-2 py-1 text-xs text-foreground focus:outline-none focus:border-accent"
                  />
+                 <div className="flex items-center gap-2 mt-1">
+                   {onSetComposition && (
+                     <button
+                       onClick={() => onSetComposition(compositionId === img.id ? null : img.id)}
+                       className={cn(
+                         "text-[10px] px-2 py-1 rounded transition-colors font-medium border",
+                         compositionId === img.id 
+                           ? "bg-accent/20 text-accent border-accent/30" 
+                           : "bg-panel border-panelBorder text-gray-400 hover:text-gray-300"
+                       )}
+                     >
+                       {compositionId === img.id ? "★ Composition" : "Set Composition"}
+                     </button>
+                   )}
+                 </div>
                  <div className="flex items-center gap-3 self-end mt-1">
                    {onGeneratePrompt && (
                      <button 

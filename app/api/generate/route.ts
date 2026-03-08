@@ -6,7 +6,12 @@ import { db } from '@/db';
 import { usersTable, generationsTable } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import { put } from '@vercel/blob';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_MOONANAS_SUPABASE_URL || '',
+  process.env.MOONANAS_SUPABASE_SERVICE_ROLE_KEY || ''
+);
 
 export const maxDuration = 60; // Set Vercel max duration limit higher for generation
 export const dynamic = 'force-dynamic';
@@ -79,15 +84,19 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    if (!body.prompt) {
-      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    if (!body.prompt && (!body.references || body.references.length === 0)) {
+      return NextResponse.json({ error: 'A prompt or a reference image is required' }, { status: 400 });
     }
+
+    const finalPrompt = body.prompt && body.prompt.trim() !== '' 
+      ? body.prompt 
+      : "Generate a high-quality image that combines the provided reference images, adhering to their composition and style features.";
 
     // Spec says to use model: "gemini-3.1-flash-image-preview" via @google/generative-ai
     const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-image-preview' });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parts: any[] = [{ text: body.prompt }];
+    const parts: any[] = [{ text: finalPrompt }];
     
     // Append any reference images
     if (body.references && body.references.length > 0) {
@@ -141,15 +150,28 @@ export async function POST(req: NextRequest) {
             // Convert base64 to buffer natively on Node Edge
             const buffer = Buffer.from(base64Image, 'base64');
             const blobId = randomUUID();
+            const filePath = `${blobId}.jpg`;
             
-            // Push directly to Vercel Blob
-            const blob = await put(`generations/${blobId}.jpg`, buffer, {
-              access: 'public',
-              contentType: 'image/jpeg',
-            });
+            // Push directly to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+              .from('generations')
+              .upload(filePath, buffer, {
+                contentType: 'image/jpeg',
+                cacheControl: '3600',
+                upsert: false
+              });
+              
+            if (uploadError) {
+              console.error("Supabase Storage Upload Error:", uploadError);
+              throw new Error("Failed to upload image to storage");
+            }
 
-            // Store the CDN URL natively
-            results.push(blob.url);
+            // Get public URL
+            const { data: publicUrlData } = supabase.storage
+              .from('generations')
+              .getPublicUrl(filePath);
+
+            results.push(publicUrlData.publicUrl);
         }
     }
 

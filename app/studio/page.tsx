@@ -30,6 +30,8 @@ export default function Home() {
     seed: undefined,
     references: [],
     activeCharacterIds: [],
+    stylePresetIds: [],
+    styleModifiers: [],
   });
 
   const [activeTab, setActiveTab] = useState<'settings' | 'styles' | 'references' | 'characters'>('settings');
@@ -56,7 +58,11 @@ export default function Home() {
   };
 
   const handleGenerate = async () => {
-    if (!settings.prompt) return;
+    const hasRefs = settings.references.length > 0 || settings.activeCharacterIds.length > 0 || settings.styleReference;
+    if (!settings.prompt.trim() && !hasRefs) {
+       toast('Please enter a prompt or add a reference image.', 'error');
+       return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -69,7 +75,9 @@ export default function Home() {
            const characters: CharacterProfile[] = JSON.parse(savedChars);
            const activeChars = characters.filter(c => settings.activeCharacterIds.includes(c.id));
            activeChars.forEach(c => {
-             compiledReferences = [...compiledReferences, ...c.images];
+             // Attach the character's name to each of their reference images
+             const namedImages = c.images.map(img => ({ ...img, label: `Character Reference: ${c.name}` }));
+             compiledReferences = [...compiledReferences, ...namedImages];
            });
          }
       }
@@ -202,7 +210,7 @@ export default function Home() {
             className={cn("flex-1 py-3 px-2 text-xs font-medium flex justify-center items-center gap-2 border-b-2 transition-colors min-w-fit", activeTab === 'styles' ? "border-accent text-white" : "border-transparent text-gray-500 hover:text-gray-300")}
           >
             <Palette className="w-4 h-4" /> Styles
-            {(settings.stylePresetId || settings.styleReference) && <span className="bg-accent rounded-full w-1.5 h-1.5" />}
+            {((settings.stylePresetIds && settings.stylePresetIds.length > 0) || settings.styleReference) && <span className="bg-accent rounded-full w-1.5 h-1.5" />}
           </button>
           <button 
             onClick={() => setActiveTab('references')}
@@ -232,6 +240,8 @@ export default function Home() {
             <ReferenceImages 
               images={settings.references} 
               onChange={(imgs) => handleSettingChange('references', imgs)} 
+              compositionId={settings.compositionReferenceId}
+              onSetComposition={(id) => handleSettingChange('compositionReferenceId', id)}
               onGeneratePrompt={handleGeneratePrompt}
             />
           </div>
@@ -342,7 +352,7 @@ export default function Home() {
             </div>
             <button
               onClick={handleGenerate}
-              disabled={isLoading || !settings.prompt.trim()}
+              disabled={isLoading || (!settings.prompt.trim() && settings.references.length === 0 && settings.activeCharacterIds.length === 0 && !settings.styleReference)}
               className="h-[56px] px-8 bg-accent hover:bg-accentHover disabled:bg-panel border disabled:border-panelBorder border-transparent rounded-xl flex items-center gap-2 font-medium transition-all shadow-lg active:scale-95 text-white disabled:text-gray-500"
             >
               <span>{isLoading ? 'Wait...' : 'Generate'}</span>

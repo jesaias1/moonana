@@ -25,18 +25,18 @@ export async function POST(req: Request) {
       payment_method_types: ['card'],
       metadata: {
         userId: userSession?.id ? String(userSession.id) : 'anonymous',
-        tokens: '100',
+        tokens: '50',
       },
       line_items: [
         {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: '100 Moonana Generation Tokens',
+              name: '50 Moonana Generation Tokens',
               description: 'Ultra-fast Gemini 3.1 Flash generations. Includes 20% platform infrastructure fee.',
               images: [`${protocol}://${host}/logo.png`],
             },
-            unit_amount: 200, // $2.00 in cents
+            unit_amount: 500, // $5.00 in cents
           },
           quantity: 1,
         },

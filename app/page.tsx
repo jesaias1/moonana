@@ -124,8 +124,8 @@ export default function LandingPage() {
                     <span className="text-gray-300 font-medium tracking-wide uppercase text-sm">Generations</span>
                   </div>
                   <div className="flex items-baseline gap-2 pt-3 border-t border-white/10">
-                    <span className="text-2xl font-bold">$2</span>
-                    <span className="text-gray-500 font-medium uppercase text-xs">/ 100 images thereafter</span>
+                    <span className="text-2xl font-bold">$5</span>
+                    <span className="text-gray-500 font-medium uppercase text-xs">/ 50 images thereafter</span>
                   </div>
                 </div>
                 <ul className="space-y-3">
