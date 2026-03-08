@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       email,
       passwordHash: hashedPassword,
       role: isAdmin ? 'admin' : 'user',
-      tokenBalance: 10, // Default signup bonus
+      tokenBalance: 7, // Default signup bonus
     });
 
     // Create session

@@ -109,7 +109,7 @@ export default function LandingPage() {
       <section id="pricing" className="py-24 px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">Simple, Transparent Pricing</h2>
-          <p className="text-gray-400 mb-12">Get 10 free generations on sign up. Purchase tokens to continue creating.</p>
+          <p className="text-gray-400 mb-12">Get 7 free generations on sign up. Purchase tokens to continue creating.</p>
 
           <div className="bg-gradient-to-br from-panel to-background border border-panelBorder rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-left">
             <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-[80px] rounded-full pointer-events-none" />
@@ -120,7 +120,7 @@ export default function LandingPage() {
                 <p className="text-gray-400 mb-6">Fuel your creativity without subscription traps.</p>
                 <div className="flex flex-col mb-6 text-white bg-white/5 p-5 rounded-2xl border border-white/10">
                   <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-5xl font-extrabold text-green-400">10 Free</span>
+                    <span className="text-5xl font-extrabold text-green-400">7 Free</span>
                     <span className="text-gray-300 font-medium tracking-wide uppercase text-sm">Generations</span>
                   </div>
                   <div className="flex items-baseline gap-2 pt-3 border-t border-white/10">

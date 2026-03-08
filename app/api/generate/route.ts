@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 
 // Token tracking: Maps IP -> Remaining Tokens
 const tokenMap = new Map<string, { balance: number; lastModified: number }>();
-const MAX_FREE_TOKENS = 10;
+const MAX_FREE_TOKENS = 7;
 
 function checkAndConsumeToken(ip: string): boolean {
   const now = Date.now();

@@ -28,10 +28,13 @@ export async function GET() {
     const activeUsers = totalUsersQuery[0]?.value || 0;
     const totalGenerations = totalGenerationsQuery[0]?.value || 0;
     
-    // Estimate Revenue based on tokens? Or just static representation for MVP
-    // Assuming starting tokens is 10, every extra token bought is 2 cents ($2.00 / 100).
-    // We could calculate this from a 'purchases' table but we omitted it for a simpler webhook.
-    // For now we will return the dynamic counts.
+    // Estimate Revenue based on tokens?    // Simple math: calculate approximate revenue.
+    // Assuming starting tokens is 7, every extra token bought is 10 cents ($5.00 / 50).
+    // Note: totalTokens and totalUsers would need to be fetched for this calculation to be meaningful.
+    // For now, this is a placeholder comment as the variables are not defined in this scope.
+    // const payingUsersEstimate = totalTokens > (totalUsers * 7) 
+    //     ? ((totalTokens - (totalUsers * 7)) * 0.10) 
+    //     : 0;
 
     return NextResponse.json({
       activeUsers,
