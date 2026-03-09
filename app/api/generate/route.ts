@@ -119,11 +119,11 @@ export async function POST(req: NextRequest) {
 
     const results: string[] = [];
     
-    // We generate images iteratively based on numberOfImages
-    for (let i = 0; i < requestedImages; i++) {
+    // We generate images in parallel to avoid Vercel 504 Serverless timeouts
+    const generationPromises = Array.from({ length: requestedImages }).map(async (_, i) => {
         const generationConfig: Record<string, unknown> = {};
         if (body.seed !== undefined && body.seed !== null) {
-             generationConfig.seed = body.seed + i; // Offset seed for multiple outputs to avoid duplicate images
+             generationConfig.seed = body.seed + i; // Offset seed
         }
 
         const response = await model.generateContent({
@@ -146,34 +146,38 @@ export async function POST(req: NextRequest) {
              }
         }
         
-        if (base64Image) {
-            // Convert base64 to buffer natively on Node Edge
-            const buffer = Buffer.from(base64Image, 'base64');
-            const blobId = randomUUID();
-            const filePath = `${blobId}.jpg`;
-            
-            // Push directly to Supabase Storage
-            const { error: uploadError } = await supabase.storage
-              .from('generations')
-              .upload(filePath, buffer, {
-                contentType: 'image/jpeg',
-                cacheControl: '3600',
-                upsert: false
-              });
-              
-            if (uploadError) {
-              console.error("Supabase Storage Upload Error:", uploadError);
-              throw new Error(`Failed to upload image to storage: ${uploadError.message}`);
-            }
-
-            // Get public URL
-            const { data: publicUrlData } = supabase.storage
-              .from('generations')
-              .getPublicUrl(filePath);
-
-            results.push(publicUrlData.publicUrl);
+        if (!base64Image) {
+           throw new Error("Failed to extract image data");
         }
-    }
+
+        // Convert base64 to buffer natively on Node
+        const buffer = Buffer.from(base64Image, 'base64');
+        const blobId = randomUUID();
+        const filePath = `${blobId}.jpg`;
+        
+        // Push directly to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('generations')
+          .upload(filePath, buffer, {
+            contentType: 'image/jpeg',
+            cacheControl: '3600',
+            upsert: false
+          });
+          
+        if (uploadError) {
+          console.error("Supabase Storage Upload Error:", uploadError);
+          throw new Error(`Failed to upload image to storage: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('generations')
+          .getPublicUrl(filePath);
+
+        return publicUrlData.publicUrl;
+    });
+
+    const results: string[] = await Promise.all(generationPromises);
 
     // Deduct tokens and log history if logged in
     if (session && userId && results.length > 0) {
