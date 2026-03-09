@@ -1,8 +1,22 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, Layers, Wand2, Zap } from 'lucide-react';
+import { Layers, Wand2, Zap } from 'lucide-react';
+import { db } from '@/db';
+import { generationsTable } from '@/db/schema';
+import { desc, isNotNull } from 'drizzle-orm';
+import AnimatedHero from '@/components/AnimatedHero';
+import AnimatedGallery from '@/components/AnimatedGallery';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Fetch recent generations for the public showcase gallery
+  const recentGens = await db.select({ imageUrl: generationsTable.imageUrl })
+    .from(generationsTable)
+    .where(isNotNull(generationsTable.imageUrl))
+    .orderBy(desc(generationsTable.createdAt))
+    .limit(10);
+    
+  const galleryImages = recentGens.map(g => g.imageUrl);
+
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-accent/30 flex flex-col overflow-x-hidden">
       
@@ -24,44 +38,11 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden">
-        {/* Abstract Background Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/20 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute top-1/3 -right-[20%] w-[600px] h-[600px] bg-yellow-500/10 blur-[150px] rounded-full pointer-events-none" />
+      {/* Hero Section (Animated) */}
+      <AnimatedHero />
 
-        <div className="max-w-7xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-yellow-400 mb-8 blur-[0.5px] hover:blur-none transition-all cursor-default">
-            <Sparkles className="w-3 h-3" />
-            <span>Powered by Google Gemini 3.1 Flash Image</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 drop-shadow-sm">
-            The power-user interface <br className="hidden md:block"/> for generative AI.
-          </h1>
-          
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-            Moonana Studio bypasses the limitations of consumer chat interfaces. 
-            Gain absolute control over composition, character consistency, and style weights in a professional workspace.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link 
-              href="/studio" 
-              className="group flex items-center justify-center gap-2 bg-yellow-400 text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-yellow-300 transition-all hover:scale-105 shadow-[0_0_40px_rgba(250,204,21,0.3)] w-full sm:w-auto"
-            >
-              Get Started Free 
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link 
-              href="#features" 
-              className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white px-8 py-4 rounded-full font-medium text-lg hover:bg-white/10 transition-colors w-full sm:w-auto"
-            >
-              Explore Features
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Generated Image Showcase */}
+      {galleryImages.length > 0 && <AnimatedGallery images={galleryImages} />}
 
       {/* Feature Highlights */}
       <section id="features" className="py-24 bg-black/50 border-t border-b border-white/5 relative z-10">
@@ -72,18 +53,18 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-panel/50 border border-panelBorder p-8 rounded-2xl hover:bg-panel transition-colors">
-              <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center mb-6 text-accent">
+            <div className="bg-panel/50 border border-panelBorder p-8 rounded-2xl hover:bg-panel transition-colors group">
+              <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center mb-6 text-accent group-hover:scale-110 transition-transform">
                 <Layers className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-3">Composition Strictness</h3>
               <p className="text-gray-400 leading-relaxed">
-                Upload a layout reference and dial in the strictness. From &quot;Loose&quot; inspiration to &quot;Exact&quot; pixel-perfect structural alignment.
+                Upload a layout reference and dial in the strictness. From "Loose" inspiration to "Exact" pixel-perfect structural alignment.
               </p>
             </div>
             
-            <div className="bg-panel/50 border border-panelBorder p-8 rounded-2xl hover:bg-panel transition-colors">
-              <div className="w-12 h-12 bg-yellow-400/20 rounded-xl flex items-center justify-center mb-6 text-yellow-500">
+            <div className="bg-panel/50 border border-panelBorder p-8 rounded-2xl hover:bg-panel transition-colors group">
+              <div className="w-12 h-12 bg-yellow-400/20 rounded-xl flex items-center justify-center mb-6 text-yellow-500 group-hover:scale-110 transition-transform">
                 <Wand2 className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-3">Style Presets & Transfer</h3>
@@ -92,8 +73,8 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-panel/50 border border-panelBorder p-8 rounded-2xl hover:bg-panel transition-colors">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 text-purple-400">
+            <div className="bg-panel/50 border border-panelBorder p-8 rounded-2xl hover:bg-panel transition-colors group">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform">
                 <Zap className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-3">Persistent Characters</h3>
@@ -111,14 +92,14 @@ export default function LandingPage() {
           <h2 className="text-3xl md:text-5xl font-bold mb-4">Simple, Transparent Pricing</h2>
           <p className="text-gray-400 mb-12">Get 7 free generations on sign up. Purchase tokens to continue creating.</p>
 
-          <div className="bg-gradient-to-br from-panel to-background border border-panelBorder rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-left">
+          <div className="bg-gradient-to-br from-panel to-background border border-panelBorder rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-left hover:shadow-accent/10 transition-shadow duration-500">
             <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-[80px] rounded-full pointer-events-none" />
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
               <div>
                 <h3 className="text-2xl font-bold mb-2">Moonana Tokens <span className="text-accent bg-accent/10 px-2 py-0.5 rounded text-sm ml-2">PRO</span></h3>
                 <p className="text-gray-400 mb-6">Fuel your creativity without subscription traps.</p>
-                <div className="flex flex-col mb-6 text-white bg-white/5 p-5 rounded-2xl border border-white/10">
+                <div className="flex flex-col mb-6 text-white bg-white/5 p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
                   <div className="flex items-baseline gap-2 mb-3">
                     <span className="text-5xl font-extrabold text-green-400">7 Free</span>
                     <span className="text-gray-300 font-medium tracking-wide uppercase text-sm">Generations</span>
@@ -141,7 +122,7 @@ export default function LandingPage() {
               <div className="w-full md:w-auto flex-shrink-0">
                 <Link 
                   href="/studio" 
-                  className="block w-full text-center bg-white text-black px-10 py-5 rounded-2xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-lg"
+                  className="block w-full text-center bg-white text-black px-10 py-5 rounded-2xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:scale-105 transform duration-300"
                 >
                   Enter Studio
                 </Link>
