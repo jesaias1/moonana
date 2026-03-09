@@ -7,13 +7,20 @@ import { desc, isNotNull } from 'drizzle-orm';
 import AnimatedHero from '@/components/AnimatedHero';
 import AnimatedGallery from '@/components/AnimatedGallery';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LandingPage() {
   // Fetch recent generations for the public showcase gallery
-  const recentGens = await db.select({ imageUrl: generationsTable.imageUrl })
-    .from(generationsTable)
-    .where(isNotNull(generationsTable.imageUrl))
-    .orderBy(desc(generationsTable.createdAt))
-    .limit(10);
+  let recentGens: { imageUrl: string }[] = [];
+  try {
+    recentGens = await db.select({ imageUrl: generationsTable.imageUrl })
+      .from(generationsTable)
+      .where(isNotNull(generationsTable.imageUrl))
+      .orderBy(desc(generationsTable.createdAt))
+      .limit(10);
+  } catch (err) {
+    console.error("Failed to fetch recent generations for gallery:", err);
+  }
     
   const galleryImages = recentGens.map(g => g.imageUrl);
 

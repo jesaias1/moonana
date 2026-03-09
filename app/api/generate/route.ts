@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
               
             if (uploadError) {
               console.error("Supabase Storage Upload Error:", uploadError);
-              throw new Error("Failed to upload image to storage");
+              throw new Error(`Failed to upload image to storage: ${uploadError.message}`);
             }
 
             // Get public URL
