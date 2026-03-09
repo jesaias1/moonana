@@ -67,8 +67,17 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     try {
-      // Resolve character references from local storage
-      let compiledReferences = [...settings.references];
+      // Reorder so composition reference is always first
+      let baseRefs = [...settings.references];
+      if (settings.compositionReferenceId) {
+         const compIdx = baseRefs.findIndex(r => r.id === settings.compositionReferenceId);
+         if (compIdx > 0) {
+            const compItem = baseRefs.splice(compIdx, 1)[0];
+            baseRefs.unshift(compItem);
+         }
+      }
+
+      let compiledReferences = [...baseRefs];
       if (settings.activeCharacterIds.length > 0) {
          const savedChars = localStorage.getItem('banana_characters');
          if (savedChars) {

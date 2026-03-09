@@ -24,7 +24,8 @@ export default function SplashScreen() {
     };
   }, []);
 
-  if (isReadyForUnmount) return null;
+  // FORCE BYPASS for debugging
+  return null;
 
   return (
     <div
