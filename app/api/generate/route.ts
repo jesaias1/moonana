@@ -117,8 +117,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const results: string[] = [];
-    
     // We generate images in parallel to avoid Vercel 504 Serverless timeouts
     const generationPromises = Array.from({ length: requestedImages }).map(async (_, i) => {
         const generationConfig: Record<string, unknown> = {};
