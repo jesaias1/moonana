@@ -59,7 +59,7 @@ export default async function LandingPage() {
               </div>
               <h3 className="text-xl font-bold mb-3">Composition Strictness</h3>
               <p className="text-gray-400 leading-relaxed">
-                Upload a layout reference and dial in the strictness. From "Loose" inspiration to "Exact" pixel-perfect structural alignment.
+                Upload a layout reference and dial in the strictness. From &quot;Loose&quot; inspiration to &quot;Exact&quot; pixel-perfect structural alignment.
               </p>
             </div>
             
