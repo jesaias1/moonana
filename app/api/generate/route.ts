@@ -148,15 +148,16 @@ export async function POST(req: NextRequest) {
            throw new Error("Failed to extract image data");
         }
 
-        // Convert base64 to buffer natively on Node
+        // Convert base64 to ArrayBuffer natively on Node for Supabase upload
         const buffer = Buffer.from(base64Image, 'base64');
+        const arrayBuffer = new Uint8Array(buffer).buffer;
         const blobId = randomUUID();
         const filePath = `${blobId}.jpg`;
         
         // Push directly to Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('generations')
-          .upload(filePath, buffer, {
+          .upload(filePath, arrayBuffer, {
             contentType: 'image/jpeg',
             cacheControl: '3600',
             upsert: false
@@ -164,7 +165,8 @@ export async function POST(req: NextRequest) {
           
         if (uploadError) {
           console.error("Supabase Storage Upload Error:", uploadError);
-          throw new Error(`Failed to upload image to storage: ${uploadError.message}`);
+          console.warn("Falling back to inline base64 image due to storage failure.");
+          return `data:image/jpeg;base64,${base64Image}`;
         }
 
         // Get public URL
