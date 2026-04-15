@@ -1,25 +1,62 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Download, Expand, X, ImageIcon } from 'lucide-react';
+import { Download, Expand, X, ImageIcon, Copy, Check, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ImageDisplayProps {
   images: string[];
   isLoading: boolean;
+  elapsedMs?: number | null;
 }
 
-export default function ImageDisplay({ images, isLoading }: ImageDisplayProps) {
+export default function ImageDisplay({ images, isLoading, elapsedMs }: ImageDisplayProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const handleDownload = (imgUrl: string, index: number, e: React.MouseEvent) => {
+  const handleDownload = async (imgUrl: string, index: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    const a = document.createElement('a');
-    a.href = imgUrl;
-    a.download = `nano-banana-${Date.now()}-${index + 1}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      // Fetch the image to handle both base64 and URL-hosted images uniformly
+      const response = await fetch(imgUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `moonana-gen-${Date.now()}-${index + 1}.png`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+    } catch {
+      // Fallback for base64 direct download
+      const a = document.createElement('a');
+      a.href = imgUrl;
+      a.download = `moonana-gen-${Date.now()}-${index + 1}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
+  const handleCopyToClipboard = async (imgUrl: string, index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(imgUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy image to clipboard:', err);
+    }
+  };
+
+  const formatElapsed = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
   };
 
   return (
@@ -65,55 +102,80 @@ export default function ImageDisplay({ images, isLoading }: ImageDisplayProps) {
             <ImageIcon className="w-16 h-16 mb-4 opacity-50 text-gray-400" />
             <h3 className="text-xl font-medium mb-2 text-gray-300">No images generated yet</h3>
             <p className="text-sm text-center max-w-sm line-clamp-2">
-              Enter a prompt below and click generate to invoke Google&apos;s Nano Banana model.
+              Enter a prompt below and click generate to invoke Google&apos;s Gemini image model.
             </p>
           </div>
         </div>
       )}
 
       {!isLoading && images.length > 0 && (
-        <div className={cn(
-          "w-full h-full grid gap-6 content-start",
-          images.length === 1 && "grid-cols-1",
-          images.length === 2 && "grid-cols-2",
-          images.length >= 3 && "grid-cols-2 lg:grid-cols-4",
-        )}>
-        {images.map((img, i) => (
-          <div
-            key={i}
-            className="group relative rounded-xl overflow-hidden border border-panelBorder bg-black shadow-lg transition-transform hover:scale-[1.02] cursor-pointer flex items-center justify-center p-2"
-            onClick={() => setSelectedImage(img)}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src={img} 
-              alt={`Generation result ${i + 1}`} 
-              className="w-full h-full object-contain"
-            />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-              <button 
-                onClick={(e) => handleDownload(img, i, e)}
-                className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-colors"
-                title="Download Image"
-              >
-                <Download className="w-5 h-5 text-white" />
-              </button>
-              <button 
-                className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-colors"
-                title="View Fullscreen"
-              >
-                <Expand className="w-5 h-5 text-white" />
-              </button>
+        <div className="w-full h-full flex flex-col gap-4">
+          {/* Generation Stats Bar */}
+          {elapsedMs && (
+            <div className="flex items-center gap-3 text-xs text-gray-500 px-1">
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                Generated in {formatElapsed(elapsedMs)}
+              </span>
+              <span>•</span>
+              <span>{images.length} image{images.length > 1 ? 's' : ''}</span>
             </div>
+          )}
+
+          <div className={cn(
+            "w-full flex-1 grid gap-6 content-start",
+            images.length === 1 && "grid-cols-1",
+            images.length === 2 && "grid-cols-2",
+            images.length >= 3 && "grid-cols-2 lg:grid-cols-4",
+          )}>
+          {images.map((img, i) => (
+            <div
+              key={i}
+              className="group relative rounded-xl overflow-hidden border border-panelBorder bg-black shadow-lg transition-all hover:scale-[1.02] cursor-pointer flex items-center justify-center p-2 animate-in fade-in slide-in-from-bottom-4 duration-500"
+              style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'backwards' }}
+              onClick={() => setSelectedImage(img)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={img} 
+                alt={`Generation result ${i + 1}`} 
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <button 
+                  onClick={(e) => handleCopyToClipboard(img, i, e)}
+                  className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-colors"
+                  title="Copy to Clipboard"
+                >
+                  {copiedIndex === i 
+                    ? <Check className="w-5 h-5 text-green-400" />
+                    : <Copy className="w-5 h-5 text-white" />
+                  }
+                </button>
+                <button 
+                  onClick={(e) => handleDownload(img, i, e)}
+                  className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-colors"
+                  title="Download Image"
+                >
+                  <Download className="w-5 h-5 text-white" />
+                </button>
+                <button 
+                  className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-colors"
+                  title="View Fullscreen"
+                >
+                  <Expand className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            </div>
+          ))}
           </div>
-        ))}
         </div>
       )}
 
       {/* Lightbox / Modal */}
       {selectedImage && (
         <div 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-8"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-8 animate-in fade-in duration-200"
           onClick={() => setSelectedImage(null)}
         >
           <button 
@@ -126,7 +188,7 @@ export default function ImageDisplay({ images, isLoading }: ImageDisplayProps) {
           <img 
             src={selectedImage} 
             alt="Fullscreen preview" 
-            className="max-w-full max-h-full rounded-md shadow-2xl object-contain"
+            className="max-w-full max-h-full rounded-md shadow-2xl object-contain animate-in zoom-in-95 duration-300"
           />
         </div>
       )}

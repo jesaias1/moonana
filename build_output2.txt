@@ -1,0 +1,45 @@
+﻿
+> moonana-studio@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/15) ...
+   Generating static pages (3/15) 
+   Generating static pages (7/15) 
+   Generating static pages (11/15) 
+ Ô£ô Generating static pages (15/15)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+Ôöî ãÆ /                                    41.2 kB         138 kB
+Ôö£ Ôùï /_not-found                          873 B          88.2 kB
+Ôö£ Ôùï /admin                               2.43 kB          99 kB
+Ôö£ ãÆ /api/admin/stats                     0 B                0 B
+Ôö£ ãÆ /api/auth/login                      0 B                0 B
+Ôö£ ãÆ /api/auth/logout                     0 B                0 B
+Ôö£ ãÆ /api/auth/me                         0 B                0 B
+Ôö£ ãÆ /api/auth/signup                     0 B                0 B
+Ôö£ ãÆ /api/generate                        0 B                0 B
+Ôö£ ãÆ /api/generate-prompt                 0 B                0 B
+Ôö£ ãÆ /api/stripe/checkout                 0 B                0 B
+Ôö£ ãÆ /api/stripe/webhook                  0 B                0 B
+Ôö£ Ôùï /icon.png                            0 B                0 B
+Ôö£ Ôùï /login                               3.31 kB        90.6 kB
+Ôö£ Ôùï /sitemap.xml                         0 B                0 B
+Ôöö Ôùï /studio                              31.4 kB         128 kB
++ First Load JS shared by all            87.3 kB
+  Ôö£ chunks/117-ba886579cdf9bdc7.js       31.7 kB
+  Ôö£ chunks/fd9d1056-6402681317ea8432.js  53.6 kB
+  Ôöö other shared chunks (total)          1.95 kB
+
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

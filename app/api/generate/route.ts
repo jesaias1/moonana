@@ -8,12 +8,15 @@ import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_MOONANAS_SUPABASE_URL || '',
-  process.env.MOONANAS_SUPABASE_SERVICE_ROLE_KEY || ''
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_MOONANAS_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.MOONANAS_SUPABASE_SERVICE_ROLE_KEY || '';
 
-export const maxDuration = 60; // Set Vercel max duration limit higher for generation
+// Lazy-init supabase client (only if credentials are present)
+const supabase = supabaseUrl && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
+
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 // Token tracking: Maps IP -> Remaining Tokens
@@ -31,7 +34,6 @@ function checkAndConsumeToken(ip: string): boolean {
 
   // Quick garbage collection (1%) to prevent map leak
   if (Math.random() < 0.01) {
-    // Arbitrary 30-day cleanup of dead IP records
     const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
     Array.from(tokenMap.entries()).forEach(([key, value]) => {
       if (now - value.lastModified > THIRTY_DAYS) tokenMap.delete(key);
@@ -41,25 +43,61 @@ function checkAndConsumeToken(ip: string): boolean {
   if (record.balance > 0) {
     record.balance -= 1;
     record.lastModified = now;
-    return true; // Token granted
+    return true;
   }
 
-  return false; // Token exhausted
+  return false;
+}
+
+/**
+ * Extract base64 image data from a Gemini API response.
+ * Scans ALL candidate parts for inlineData, not just the first one.
+ */
+function extractBase64FromResponse(response: { response: { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data: string; mimeType?: string } }> } }>; text: () => string } }): string {
+  const candidates = response.response.candidates;
+  
+  if (candidates && candidates.length > 0) {
+    // Scan all parts in all candidates for inlineData
+    for (const candidate of candidates) {
+      const parts = candidate.content?.parts;
+      if (!parts) continue;
+      
+      for (const part of parts) {
+        if (part.inlineData?.data) {
+          return part.inlineData.data;
+        }
+      }
+    }
+  }
+  
+  // Final fallback: try text() which may contain raw base64
+  try {
+    const text = response.response.text();
+    // Check if it looks like base64 image data (long string, no HTML tags)
+    if (text.length > 1000 && !text.includes('<') && !text.includes('{')) {
+      return text.replace(/^data:image\/\w+;base64,/, '');
+    }
+  } catch {
+    // text() can throw if response has parts without text
+  }
+
+  return '';
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  
   try {
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey || apiKey.trim() === '' || apiKey === 'your_actual_api_key_here' || apiKey === 'your_key_here') {
        return NextResponse.json({ error: 'Google API Key not configured properly in .env.local' }, { status: 500 });
     }
 
-    // Explicitly fallback to 'dummy' to satisfy Next.js static analyzers that might bypass the conditional return
-    const genAI = new GoogleGenerativeAI(apiKey || 'dummy_build_token');
+    const genAI = new GoogleGenerativeAI(apiKey);
     const body: GenerationSettings = await req.json();
 
     const session = await getSession();
-    const reqIp = req.ip ?? req.headers.get('x-forwarded-for') ?? 'unknown'; // Token Limit Validation
+    const reqIp = req.ip ?? req.headers.get('x-forwarded-for') ?? 'unknown';
     const requestedImages = body.numberOfImages || 1;
 
     let hasToken = false;
@@ -74,13 +112,13 @@ export async function POST(req: NextRequest) {
         hasToken = currentDbTokens >= requestedImages;
       }
     } else {
-      hasToken = checkAndConsumeToken(reqIp); // old guest fallback
+      hasToken = checkAndConsumeToken(reqIp);
     }
 
     if (!hasToken) {
       return NextResponse.json(
         { error: 'Token limit exhausted. Please login or purchase more tokens.', code: 'PAYMENT_REQUIRED' },
-        { status: 402 } // HTTP 402 Payment Required
+        { status: 402 }
       );
     }
     
@@ -92,7 +130,6 @@ export async function POST(req: NextRequest) {
       ? body.prompt 
       : "Generate a high-quality image that combines the provided reference images, adhering to their composition and style features.";
 
-    // Spec says to use model: "gemini-3.1-flash-image-preview" via @google/generative-ai
     const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-image-preview' });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,11 +138,9 @@ export async function POST(req: NextRequest) {
     // Append any reference images
     if (body.references && body.references.length > 0) {
       body.references.forEach((ref) => {
-        // base64 format is typically "data:image/jpeg;base64,...data..."
         const [meta, data] = ref.base64.split(',');
         const mimeType = meta.split(':')[1].split(';')[0];
         
-        // Explicitly label the attached inlineData part
         parts.push({ text: `\n[Attached Reference Image: ${ref.label || 'Unnamed'}]\n` });
         
         parts.push({
@@ -117,11 +152,11 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // We generate images in parallel to avoid Vercel 504 Serverless timeouts
+    // Generate images in parallel
     const generationPromises = Array.from({ length: requestedImages }).map(async (_, i) => {
         const generationConfig: Record<string, unknown> = {};
         if (body.seed !== undefined && body.seed !== null) {
-             generationConfig.seed = body.seed + i; // Offset seed
+             generationConfig.seed = body.seed + i;
         }
 
         const response = await model.generateContent({
@@ -129,70 +164,63 @@ export async function POST(req: NextRequest) {
              generationConfig
         });
         
-        const candidates = response.response.candidates;
-        let base64Image = '';
-        
-        if (candidates && candidates.length > 0 && candidates[0].content?.parts?.[0]?.inlineData) {
-            const data = candidates[0].content.parts[0].inlineData;
-            base64Image = data.data; // Raw base64 payload
-        } else {
-             const responseText = response.response.text();
-             if (responseText.length > 500) { 
-                 base64Image = responseText.replace(/^data:image\/\w+;base64,/, '');
-             } else {
-                 throw new Error("Could not parse image from model response, check API key permissions.");
-             }
-        }
+        const base64Image = extractBase64FromResponse(response);
         
         if (!base64Image) {
-           throw new Error("Failed to extract image data");
+           throw new Error("Failed to extract image data from model response. The model may not have returned an image.");
         }
 
-        // Convert base64 to ArrayBuffer natively on Node for Supabase upload
-        const buffer = Buffer.from(base64Image, 'base64');
-        const arrayBuffer = new Uint8Array(buffer).buffer;
-        const blobId = randomUUID();
-        const filePath = `${blobId}.jpg`;
+        // Try to upload to Supabase Storage, fall back to inline base64 if unavailable
+        if (supabase) {
+          try {
+            const buffer = Buffer.from(base64Image, 'base64');
+            const arrayBuffer = new Uint8Array(buffer).buffer;
+            const blobId = randomUUID();
+            const filePath = `${blobId}.jpg`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('generations')
+              .upload(filePath, arrayBuffer, {
+                contentType: 'image/jpeg',
+                cacheControl: '3600',
+                upsert: false
+              });
+              
+            if (uploadError) {
+              console.error("Supabase Storage Upload Error:", uploadError);
+              return `data:image/jpeg;base64,${base64Image}`;
+            }
+
+            const { data: publicUrlData } = supabase.storage
+              .from('generations')
+              .getPublicUrl(filePath);
+
+            return publicUrlData.publicUrl;
+          } catch (storageErr) {
+            console.error("Storage upload network error:", storageErr);
+            return `data:image/jpeg;base64,${base64Image}`;
+          }
+        }
         
-        // Push directly to Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from('generations')
-          .upload(filePath, arrayBuffer, {
-            contentType: 'image/jpeg',
-            cacheControl: '3600',
-            upsert: false
-          });
-          
-        if (uploadError) {
-          console.error("Supabase Storage Upload Error:", uploadError);
-          console.warn("Falling back to inline base64 image due to storage failure.");
-          return `data:image/jpeg;base64,${base64Image}`;
-        }
-
-        // Get public URL
-        const { data: publicUrlData } = supabase.storage
-          .from('generations')
-          .getPublicUrl(filePath);
-
-        return publicUrlData.publicUrl;
+        // No Supabase configured — return inline base64
+        return `data:image/jpeg;base64,${base64Image}`;
     });
 
     const results: string[] = await Promise.all(generationPromises);
+    const elapsedMs = Date.now() - startTime;
 
     // Deduct tokens and log history if logged in
     if (session && userId && results.length > 0) {
-      // Deduct exactly the amount we successfully generated
       await db.update(usersTable)
         .set({ tokenBalance: sql`${usersTable.tokenBalance} - ${results.length}` })
         .where(eq(usersTable.id, userId));
 
-      // Asynchronously log the generations to PostgreSQL using the Blob CDN URL
       try {
          const generationInserts = results.map(url => ({
            id: randomUUID(),
            userId: userId,
            prompt: body.prompt,
-           imageUrl: url, 
+           imageUrl: url.startsWith('data:') ? '[inline-base64]' : url, // Don't store huge base64 in DB
          }));
          await db.insert(generationsTable).values(generationInserts);
       } catch (logErr) {
@@ -208,7 +236,11 @@ export async function POST(req: NextRequest) {
        finalTokensRemaining = tokenMap.get(reqIp)?.balance || 0;
     }
 
-    return NextResponse.json({ images: results, tokensRemaining: finalTokensRemaining });
+    return NextResponse.json({ 
+      images: results, 
+      tokensRemaining: finalTokensRemaining,
+      elapsedMs,
+    });
   } catch (err: unknown) {
     console.error('Generation Error:', err);
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to generate image' }, { status: 500 });

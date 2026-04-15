@@ -42,6 +42,7 @@ export default function Home() {
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [tokensRemaining, setTokensRemaining] = useState<number>(10);
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
 
   // Check auth session
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function Home() {
     setError(null);
     try {
       // Reorder so composition reference is always first
-      let baseRefs = [...settings.references];
+      const baseRefs = [...settings.references];
       if (settings.compositionReferenceId) {
          const compIdx = baseRefs.findIndex(r => r.id === settings.compositionReferenceId);
          if (compIdx > 0) {
@@ -127,13 +128,19 @@ export default function Home() {
       if (data.tokensRemaining !== undefined) {
         setTokensRemaining(data.tokensRemaining);
       }
+      
+      if (data.elapsedMs) {
+        setElapsedMs(data.elapsedMs);
+      }
 
       const imagesData = data.images || [];
       setImages(imagesData);
 
-      // Save History
+      // Save History & show feedback
       if (imagesData.length > 0) {
-        toast('Generation complete! Image saved to history.', 'success');
+        const elapsed = data.elapsedMs ? ` in ${(data.elapsedMs / 1000).toFixed(1)}s` : '';
+        const tokenInfo = data.tokensRemaining !== undefined ? ` • ${data.tokensRemaining} tokens left` : '';
+        toast(`Generation complete${elapsed}${tokenInfo}`, 'success');
         addHistoryEntry({
           id: Math.random().toString(36).substring(7),
           timestamp: new Date().toISOString(),
@@ -328,7 +335,7 @@ export default function Home() {
 
         {/* Center: Image Display */}
         <div className="flex-1 relative overflow-hidden flex flex-col">
-           <ImageDisplay images={images} isLoading={isLoading} />
+           <ImageDisplay images={images} isLoading={isLoading} elapsedMs={elapsedMs} />
         </div>
 
         {/* Bottom: Prompt Input & Builder */}

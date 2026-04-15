@@ -37,7 +37,7 @@ export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
             <Zap className="w-8 h-8 text-black fill-black" />
           </div>
           <h2 className="text-3xl font-extrabold mb-2">Out of Tokens!</h2>
-          <p className="text-gray-400">You&apos;ve used up your 10 free generations.</p>
+          <p className="text-gray-400">You&apos;ve used up your free generations.</p>
         </div>
 
         {/* Pricing Content */}
@@ -46,8 +46,8 @@ export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
             <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full point-events-none" />
             <div className="text-sm font-bold text-yellow-500 uppercase tracking-widest mb-2">Pro Package</div>
             <div className="flex items-baseline justify-center gap-1 mb-4">
-              <span className="text-5xl font-black">$2</span>
-              <span className="text-gray-400 font-medium">/ 100 Tokens</span>
+              <span className="text-5xl font-black">$5</span>
+              <span className="text-gray-400 font-medium">/ 50 Tokens</span>
             </div>
             <ul className="text-sm text-gray-300 space-y-3 mb-6 text-left w-full max-w-[240px] mx-auto">
               <li className="flex items-center gap-2"><Rocket className="w-4 h-4 text-yellow-500" /> Ultra-fast Gemini 3.1 Flash</li>
@@ -56,9 +56,9 @@ export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
 
             <button 
               onClick={handleCheckout}
-              className="w-full bg-accent text-black font-bold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(250,204,21,0.3)] hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-yellow-400 text-black font-bold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(250,204,21,0.3)] hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2"
             >
-              Buy 100 Tokens
+              Buy 50 Tokens — $5
             </button>
           </div>
           <p className="text-xs text-center text-gray-500">Payments are processed securely via Stripe. You can purchase additional tokens at any time. Prices include a minor 20% platform infrastructure fee.</p>

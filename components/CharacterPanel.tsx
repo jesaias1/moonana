@@ -125,7 +125,7 @@ export default function CharacterPanel({ activeCharacterIds, onChangeActive }: C
                 key={char.id}
                 onClick={() => toggleActive(char.id)}
                 className={cn(
-                  "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all",
+                  "group flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all",
                   isActive ? "bg-accent/10 border-accent/50" : "bg-panel border-panelBorder hover:border-gray-600"
                 )}
               >
