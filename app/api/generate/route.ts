@@ -92,10 +92,17 @@ export async function POST(req: NextRequest) {
 
     if (session && typeof session.id === 'string') {
       userId = session.id;
-      const userRecords = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-      if (userRecords.length > 0) {
-        currentDbTokens = userRecords[0].tokenBalance;
-        hasToken = currentDbTokens >= requestedImages;
+      try {
+        const userRecords = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+        if (userRecords.length > 0) {
+          currentDbTokens = userRecords[0].tokenBalance;
+          hasToken = currentDbTokens >= requestedImages;
+        }
+      } catch {
+        // DB is down — fall back to in-memory token tracking for logged-in users too
+        console.warn('DB unavailable for token check, using in-memory fallback');
+        hasToken = checkAndConsumeToken(reqIp);
+        userId = ''; // Don't try DB writes later
       }
     } else {
       hasToken = checkAndConsumeToken(reqIp);
@@ -237,22 +244,22 @@ export async function POST(req: NextRequest) {
     }
     const elapsedMs = Date.now() - startTime;
 
-    // Deduct tokens and log history if logged in
+    // Deduct tokens and log history if logged in (skip if DB is down — userId will be empty)
     if (session && userId && results.length > 0) {
-      await db.update(usersTable)
-        .set({ tokenBalance: sql`${usersTable.tokenBalance} - ${results.length}` })
-        .where(eq(usersTable.id, userId));
-
       try {
-         const generationInserts = results.map(url => ({
-           id: randomUUID(),
-           userId: userId,
-           prompt: body.prompt,
-           imageUrl: url.startsWith('data:') ? '[inline-base64]' : url, // Don't store huge base64 in DB
-         }));
-         await db.insert(generationsTable).values(generationInserts);
-      } catch (logErr) {
-         console.error("Failed to log generation history to DB:", logErr);
+        await db.update(usersTable)
+          .set({ tokenBalance: sql`${usersTable.tokenBalance} - ${results.length}` })
+          .where(eq(usersTable.id, userId));
+
+        const generationInserts = results.map(url => ({
+          id: randomUUID(),
+          userId: userId,
+          prompt: body.prompt,
+          imageUrl: url.startsWith('data:') ? '[inline-base64]' : url,
+        }));
+        await db.insert(generationsTable).values(generationInserts);
+      } catch (dbErr) {
+        console.warn("DB unavailable for token deduction/logging:", (dbErr as Error).message);
       }
     }
 

@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
-import { hash } from 'bcrypt';
-import { db } from '@/db';
-import { usersTable } from '@/db/schema';
 import { signToken } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { randomUUID } from 'crypto';
-import { eq } from 'drizzle-orm';
 
 export async function POST(req: Request) {
   try {
@@ -18,27 +14,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if user exists
-    const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
-    if (existing.length > 0) {
-      return NextResponse.json({ error: 'Email already in use.' }, { status: 400 });
+    const isAdmin = email === 'lin4s@live.dk';
+    const id = randomUUID();
+    const role = isAdmin ? 'admin' : 'user';
+
+    // Try DB-based signup first
+    let dbSuccess = false;
+    try {
+      const { db } = await import('@/db');
+      const { usersTable } = await import('@/db/schema');
+      const { eq } = await import('drizzle-orm');
+      const { hash } = await import('bcrypt');
+
+      const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
+      if (existing.length > 0) {
+        return NextResponse.json({ error: 'Email already in use.' }, { status: 400 });
+      }
+
+      const hashedPassword = await hash(password, 10);
+      await db.insert(usersTable).values({
+        id,
+        email,
+        passwordHash: hashedPassword,
+        role,
+        tokenBalance: 7,
+      });
+      dbSuccess = true;
+    } catch (dbErr) {
+      console.warn('DB unavailable for signup, using session-only mode:', (dbErr as Error).message);
     }
 
-    // Hash password and assign role
-    const hashedPassword = await hash(password, 10);
-    const isAdmin = email === 'lin4s@live.dk'; // Hardcoded admin check
-    const id = randomUUID();
-
-    await db.insert(usersTable).values({
-      id,
-      email,
-      passwordHash: hashedPassword,
-      role: isAdmin ? 'admin' : 'user',
-      tokenBalance: 7, // Default signup bonus
-    });
-
-    // Create session
-    const token = await signToken({ id, email, role: isAdmin ? 'admin' : 'user' });
+    // Create session regardless of DB state
+    const token = await signToken({ id, email, role });
     cookies().set('aijourney_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -46,7 +53,11 @@ export async function POST(req: Request) {
       path: '/',
     });
 
-    return NextResponse.json({ success: true, role: isAdmin ? 'admin' : 'user' });
+    return NextResponse.json({ 
+      success: true, 
+      role,
+      dbPersisted: dbSuccess,
+    });
   } catch (err: unknown) {
     console.error('Signup Error:', err);
     return NextResponse.json({ error: 'Failed to create account.' }, { status: 500 });

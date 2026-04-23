@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getSession } from '@/lib/auth';
-import { db } from '@/db';
-import { usersTable, generationsTable } from '@/db/schema';
-import { count } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,25 +18,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 });
     }
 
-    // Perform database aggregations
-    const totalUsersQuery = await db.select({ value: count() }).from(usersTable);
-    const totalGenerationsQuery = await db.select({ value: count() }).from(generationsTable);
+    // Try database stats, fallback to defaults if DB is down
+    let activeUsers = 0;
+    let totalGenerations = 0;
+    let status = 'Operational';
 
-    const activeUsers = totalUsersQuery[0]?.value || 0;
-    const totalGenerations = totalGenerationsQuery[0]?.value || 0;
-    
-    // Estimate Revenue based on tokens?    // Simple math: calculate approximate revenue.
-    // Assuming starting tokens is 7, every extra token bought is 10 cents ($5.00 / 50).
-    // Note: totalTokens and totalUsers would need to be fetched for this calculation to be meaningful.
-    // For now, this is a placeholder comment as the variables are not defined in this scope.
-    // const payingUsersEstimate = totalTokens > (totalUsers * 7) 
-    //     ? ((totalTokens - (totalUsers * 7)) * 0.10) 
-    //     : 0;
+    try {
+      const { db } = await import('@/db');
+      const { usersTable, generationsTable } = await import('@/db/schema');
+      const { count } = await import('drizzle-orm');
+
+      const totalUsersQuery = await db.select({ value: count() }).from(usersTable);
+      const totalGenerationsQuery = await db.select({ value: count() }).from(generationsTable);
+
+      activeUsers = totalUsersQuery[0]?.value || 0;
+      totalGenerations = totalGenerationsQuery[0]?.value || 0;
+    } catch (dbErr) {
+      console.warn('DB unavailable for admin stats:', (dbErr as Error).message);
+      status = 'Database Offline';
+    }
 
     return NextResponse.json({
       activeUsers,
       totalGenerations,
-      status: 'Operational', // Could ping the DB to verify
+      status,
     });
 
   } catch (err: unknown) {
