@@ -49,9 +49,9 @@ export default function LoginPage() {
         
         <div className="text-center mb-10 relative z-10">
           <div className="w-16 h-16 bg-background border border-panelBorder rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-            {isLogin ? <Lock className="w-8 h-8 text-yellow-400" /> : <UserPlus className="w-8 h-8 text-yellow-400" />}
+            {isLogin ? <Lock className="w-8 h-8 text-violet-400" /> : <UserPlus className="w-8 h-8 text-violet-400" />}
           </div>
-          <h1 className="text-2xl font-bold mb-2">{isLogin ? 'Welcome Back' : 'Join Moonana Studio'}</h1>
+          <h1 className="text-2xl font-bold mb-2">{isLogin ? 'Welcome Back' : 'Join AIJourney'}</h1>
           <p className="text-gray-400 text-sm">
             {isLogin ? 'Sign in to access your generative dashboard.' : 'Create an account to get 10 free generations.'}
           </p>
@@ -105,7 +105,7 @@ export default function LoginPage() {
           <button 
             type="submit" 
             disabled={isLoading || !email || !password || password.length < 6}
-            className="w-full h-12 mt-4 bg-accent hover:bg-yellow-300 disabled:bg-panel border disabled:border-panelBorder border-transparent rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-black disabled:text-gray-500 shadow-[0_0_20px_rgba(250,204,21,0.2)] disabled:shadow-none"
+            className="w-full h-12 mt-4 bg-accent hover:bg-violet-400 disabled:bg-panel border disabled:border-panelBorder border-transparent rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-white disabled:text-gray-500 shadow-[0_0_20px_rgba(139,92,246,0.2)] disabled:shadow-none"
           >
             {isLoading ? (
                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />

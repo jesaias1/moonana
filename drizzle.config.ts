@@ -7,6 +7,6 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.MOONANAS_POSTGRES_URL || '',
+    url: process.env.DATABASE_URL || process.env.MOONANAS_POSTGRES_URL || '',
   },
 });

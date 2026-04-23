@@ -38,7 +38,7 @@ export default function StylePresets({ settings, onChange }: StylePresetsProps) 
 
   // Load from local storage
   useEffect(() => {
-    const saved = localStorage.getItem('banana_styles');
+    const saved = localStorage.getItem('aijourney_styles');
     if (saved) {
       try { setCustomPresets(JSON.parse(saved)); } catch { /* ignore */ }
     }
@@ -47,7 +47,7 @@ export default function StylePresets({ settings, onChange }: StylePresetsProps) 
   // Save to local storage
   useEffect(() => {
     try {
-      localStorage.setItem('banana_styles', JSON.stringify(customPresets));
+      localStorage.setItem('aijourney_styles', JSON.stringify(customPresets));
     } catch { /* ignore */ }
   }, [customPresets]);
 

@@ -6,18 +6,18 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Moonana Studio",
-  description: "Power-user image generation frontend for Google's Gemini models.",
+  title: "AIJourney",
+  description: "Your creative AI image generation studio — powered by GPT Image 2.",
   openGraph: {
-    title: "Moonana Studio",
+    title: "AIJourney",
     description: "Absolute control over composition, character consistency, and style weights for AI image generation.",
-    url: "https://moonanastudio.com",
-    siteName: "Moonana Studio",
+    url: "https://aijourney.app",
+    siteName: "AIJourney",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moonana Studio",
+    title: "AIJourney",
     description: "The power-user interface for generative AI.",
   },
 };

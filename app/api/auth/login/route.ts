@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     if (valid) {
       const token = await signToken({ id: userId, email, role });
-      cookies().set('moonana_session', token, {
+      cookies().set('aijourney_session', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

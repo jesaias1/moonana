@@ -32,8 +32,8 @@ export async function POST(req: Request) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: '50 Moonana Generation Tokens',
-              description: 'Ultra-fast Gemini 3.1 Flash generations. Includes 20% platform infrastructure fee.',
+              name: '50 AIJourney Generation Credits',
+              description: 'High-quality GPT Image 2 generations. Includes 20% platform infrastructure fee.',
               images: [`${protocol}://${host}/logo.png`],
             },
             unit_amount: 500, // $5.00 in cents

@@ -18,7 +18,7 @@ export default function AnimatedGallery({ images }: Props) {
       
       <div className="text-center mb-10 relative z-20">
         <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500">
-          Created with Moonana
+          Created with AIJourney
         </h2>
       </div>
 

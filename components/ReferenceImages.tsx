@@ -168,7 +168,7 @@ export default function ReferenceImages({ images, onChange, compositionId, onSet
                    {onGeneratePrompt && (
                      <button 
                        onClick={() => onGeneratePrompt(img.base64)}
-                       className="text-xs text-yellow-400 hover:text-yellow-300 flex items-center gap-1 font-medium transition-colors"
+                       className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1 font-medium transition-colors"
                      >
                        <Wand2 className="w-3 h-3" /> Auto-Prompt
                      </button>

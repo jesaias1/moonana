@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { GenerationSettings } from '@/lib/types';
 import { getSession } from '@/lib/auth';
 import { db } from '@/db';
@@ -8,15 +8,15 @@ import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_MOONANAS_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.MOONANAS_SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_MOONANAS_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.MOONANAS_SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Lazy-init supabase client (only if credentials are present)
 const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey)
   : null;
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
 // Token tracking: Maps IP -> Remaining Tokens
@@ -50,50 +50,36 @@ function checkAndConsumeToken(ip: string): boolean {
 }
 
 /**
- * Extract base64 image data from a Gemini API response.
- * Scans ALL candidate parts for inlineData, not just the first one.
+ * Map the app's resolution/aspect ratio settings to GPT Image 2 supported sizes.
+ * Supported sizes: 1024x1024, 1024x1792, 1792x1024, and "auto"
  */
-function extractBase64FromResponse(response: { response: { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data: string; mimeType?: string } }> } }>; text: () => string } }): string {
-  const candidates = response.response.candidates;
-  
-  if (candidates && candidates.length > 0) {
-    // Scan all parts in all candidates for inlineData
-    for (const candidate of candidates) {
-      const parts = candidate.content?.parts;
-      if (!parts) continue;
-      
-      for (const part of parts) {
-        if (part.inlineData?.data) {
-          return part.inlineData.data;
-        }
-      }
-    }
+function mapToGptImageSize(resolution: string, aspectRatio: string): "1024x1024" | "1024x1792" | "1792x1024" | "auto" {
+  // Prioritize aspect ratio for size selection
+  if (aspectRatio === '9:16' || aspectRatio === '2:3') {
+    return '1024x1792'; // Portrait
   }
-  
-  // Final fallback: try text() which may contain raw base64
-  try {
-    const text = response.response.text();
-    // Check if it looks like base64 image data (long string, no HTML tags)
-    if (text.length > 1000 && !text.includes('<') && !text.includes('{')) {
-      return text.replace(/^data:image\/\w+;base64,/, '');
-    }
-  } catch {
-    // text() can throw if response has parts without text
+  if (aspectRatio === '16:9' || aspectRatio === '3:2') {
+    return '1792x1024'; // Landscape
   }
-
-  return '';
+  // Check resolution string for non-square hints
+  if (resolution) {
+    const parts = resolution.split('x').map(Number);
+    if (parts.length === 2 && parts[0] > parts[1]) return '1792x1024';
+    if (parts.length === 2 && parts[1] > parts[0]) return '1024x1792';
+  }
+  return '1024x1024'; // Default square
 }
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   
   try {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey || apiKey.trim() === '' || apiKey === 'your_actual_api_key_here' || apiKey === 'your_key_here') {
-       return NextResponse.json({ error: 'Google API Key not configured properly in .env.local' }, { status: 500 });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey.trim() === '' || apiKey === 'your_openai_api_key_here') {
+       return NextResponse.json({ error: 'OpenAI API Key not configured properly in .env.local' }, { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const openai = new OpenAI({ apiKey });
     const body: GenerationSettings = await req.json();
 
     const session = await getSession();
@@ -126,87 +112,129 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A prompt or a reference image is required' }, { status: 400 });
     }
 
-    const finalPrompt = body.prompt && body.prompt.trim() !== '' 
+    // Build the final prompt, incorporating reference image descriptions into the text
+    let finalPrompt = body.prompt && body.prompt.trim() !== '' 
       ? body.prompt 
-      : "Generate a high-quality image that combines the provided reference images, adhering to their composition and style features.";
+      : "Generate a stunning, high-quality image with vivid colors and professional composition.";
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-image-preview' });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parts: any[] = [{ text: finalPrompt }];
-    
-    // Append any reference images
+    // Append reference image labels into prompt context (GPT Image 2 does not accept inline image data)
     if (body.references && body.references.length > 0) {
-      body.references.forEach((ref) => {
-        const [meta, data] = ref.base64.split(',');
-        const mimeType = meta.split(':')[1].split(';')[0];
-        
-        parts.push({ text: `\n[Attached Reference Image: ${ref.label || 'Unnamed'}]\n` });
-        
-        parts.push({
-          inlineData: {
-            data: data,
-            mimeType: mimeType
-          }
-        });
-      });
+      const refDescriptions = body.references
+        .map((ref, i) => ref.label || `Reference ${i + 1}`)
+        .join(', ');
+      finalPrompt += `\n\n[Context: This generation should be informed by the following reference concepts: ${refDescriptions}]`;
     }
 
-    // Generate images in parallel
-    const generationPromises = Array.from({ length: requestedImages }).map(async (_, i) => {
-        const generationConfig: Record<string, unknown> = {};
-        if (body.seed !== undefined && body.seed !== null) {
-             generationConfig.seed = body.seed + i;
-        }
+    // Map resolution settings to GPT Image 2 supported sizes
+    const imageSize = mapToGptImageSize(body.resolution || '1024x1024', body.aspectRatio || '1:1');
 
-        const response = await model.generateContent({
-             contents: [{ role: 'user', parts: parts }],
-             generationConfig
-        });
-        
-        const base64Image = extractBase64FromResponse(response);
-        
-        if (!base64Image) {
-           throw new Error("Failed to extract image data from model response. The model may not have returned an image.");
-        }
+    // Generate images sequentially
+    const PER_IMAGE_TIMEOUT_MS = 120_000; // 120 seconds per image
+    const results: string[] = [];
 
-        // Try to upload to Supabase Storage, fall back to inline base64 if unavailable
-        if (supabase) {
-          try {
-            const buffer = Buffer.from(base64Image, 'base64');
-            const arrayBuffer = new Uint8Array(buffer).buffer;
-            const blobId = randomUUID();
-            const filePath = `${blobId}.jpg`;
-            
-            const { error: uploadError } = await supabase.storage
-              .from('generations')
-              .upload(filePath, arrayBuffer, {
-                contentType: 'image/jpeg',
-                cacheControl: '3600',
-                upsert: false
-              });
-              
-            if (uploadError) {
-              console.error("Supabase Storage Upload Error:", uploadError);
-              return `data:image/jpeg;base64,${base64Image}`;
-            }
+    for (let i = 0; i < requestedImages; i++) {
+        // Create AbortController for per-image timeout
+        const controller = new AbortController();
+        const timeoutHandle = setTimeout(() => controller.abort(), PER_IMAGE_TIMEOUT_MS);
 
-            const { data: publicUrlData } = supabase.storage
-              .from('generations')
-              .getPublicUrl(filePath);
+        try {
+          const response = await openai.images.generate({
+            model: 'gpt-image-2',
+            prompt: finalPrompt,
+            n: 1,
+            size: imageSize,
+            quality: 'high',
+          });
 
-            return publicUrlData.publicUrl;
-          } catch (storageErr) {
-            console.error("Storage upload network error:", storageErr);
-            return `data:image/jpeg;base64,${base64Image}`;
+          clearTimeout(timeoutHandle);
+          
+          const imageData = response.data?.[0];
+          if (!imageData) {
+            throw new Error("Failed to extract image data from GPT Image 2 response.");
           }
-        }
-        
-        // No Supabase configured — return inline base64
-        return `data:image/jpeg;base64,${base64Image}`;
-    });
 
-    const results: string[] = await Promise.all(generationPromises);
+          let imageUrl: string;
+
+          // Handle base64 response
+          if (imageData.b64_json) {
+            const base64Image = imageData.b64_json;
+            imageUrl = `data:image/png;base64,${base64Image}`;
+
+            // Try to upload to Supabase Storage
+            if (supabase) {
+              try {
+                const buffer = Buffer.from(base64Image, 'base64');
+                const arrayBuffer = new Uint8Array(buffer).buffer;
+                const blobId = randomUUID();
+                const filePath = `${blobId}.png`;
+                
+                const { error: uploadError } = await supabase.storage
+                  .from('generations')
+                  .upload(filePath, arrayBuffer, {
+                    contentType: 'image/png',
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+                  
+                if (!uploadError) {
+                  const { data: publicUrlData } = supabase.storage
+                    .from('generations')
+                    .getPublicUrl(filePath);
+                  imageUrl = publicUrlData.publicUrl;
+                } else {
+                  console.error("Supabase Storage Upload Error:", uploadError);
+                }
+              } catch (storageErr) {
+                console.error("Storage upload network error:", storageErr);
+              }
+            }
+          } else if (imageData.url) {
+            // Handle URL response — download and re-upload to Supabase for persistence
+            imageUrl = imageData.url;
+
+            if (supabase) {
+              try {
+                const imgResponse = await fetch(imageData.url);
+                const imgBuffer = await imgResponse.arrayBuffer();
+                const blobId = randomUUID();
+                const filePath = `${blobId}.png`;
+
+                const { error: uploadError } = await supabase.storage
+                  .from('generations')
+                  .upload(filePath, imgBuffer, {
+                    contentType: 'image/png',
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+
+                if (!uploadError) {
+                  const { data: publicUrlData } = supabase.storage
+                    .from('generations')
+                    .getPublicUrl(filePath);
+                  imageUrl = publicUrlData.publicUrl;
+                } else {
+                  console.error("Supabase Storage Upload Error:", uploadError);
+                }
+              } catch (storageErr) {
+                console.error("Storage upload network error:", storageErr);
+              }
+            }
+          } else {
+            throw new Error("GPT Image 2 returned neither a URL nor base64 data.");
+          }
+
+          results.push(imageUrl);
+        } catch (imgErr) {
+          clearTimeout(timeoutHandle);
+          if (imgErr instanceof Error && imgErr.name === 'AbortError') {
+            console.error(`Image ${i + 1} generation timed out after ${PER_IMAGE_TIMEOUT_MS / 1000}s`);
+            // If we already have some results, continue with what we have
+            if (results.length > 0) break;
+            throw new Error(`Image generation timed out after ${PER_IMAGE_TIMEOUT_MS / 1000} seconds. Try a simpler prompt or fewer images.`);
+          }
+          throw imgErr;
+        }
+    }
     const elapsedMs = Date.now() - startTime;
 
     // Deduct tokens and log history if logged in

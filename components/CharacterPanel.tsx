@@ -19,7 +19,7 @@ export default function CharacterPanel({ activeCharacterIds, onChangeActive }: C
 
   // Load from local storage
   useEffect(() => {
-    const saved = localStorage.getItem('banana_characters');
+    const saved = localStorage.getItem('aijourney_characters');
     if (saved) {
       try { setCharacters(JSON.parse(saved)); } catch { /* ignore */ }
     }
@@ -28,7 +28,7 @@ export default function CharacterPanel({ activeCharacterIds, onChangeActive }: C
   // Save to local storage
   useEffect(() => {
     try {
-      localStorage.setItem('banana_characters', JSON.stringify(characters));
+      localStorage.setItem('aijourney_characters', JSON.stringify(characters));
     } catch (e) {
       console.error('Failed to save characters to local storage, quota may be exceeded:', e);
     }

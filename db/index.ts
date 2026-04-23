@@ -2,7 +2,7 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
 
-const connectionString = process.env.MOONANAS_POSTGRES_URL || process.env.DATABASE_URL || '';
+const connectionString = process.env.DATABASE_URL || process.env.MOONANAS_POSTGRES_URL || '';
 const client = postgres(connectionString, { prepare: false });
 
 export const db = drizzle(client, { schema });

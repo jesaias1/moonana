@@ -54,7 +54,7 @@ export default function AdminDashboard() {
       {/* Admin Sidebar */}
       <div className="w-full md:w-64 bg-panel border-r border-panelBorder flex flex-col h-screen shrink-0">
         <div className="p-6 border-b border-panelBorder flex items-center gap-3">
-          <ShieldCheck className="w-6 h-6 text-yellow-400" />
+          <ShieldCheck className="w-6 h-6 text-violet-400" />
           <span className="font-bold tracking-wide">Admin Hub</span>
         </div>
         
@@ -90,9 +90,9 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Welcome Back, Admin</h1>
-              <p className="text-gray-400">Here&apos;s what&apos;s happening in Moonana Studio today.</p>
+              <p className="text-gray-400">Here&apos;s what&apos;s happening in AIJourney today.</p>
             </div>
-            <Link href="/studio" className="flex items-center gap-2 px-6 py-3 bg-accent text-black font-bold rounded-xl hover:bg-yellow-300 transition-colors shadow-lg shadow-accent/20">
+            <Link href="/studio" className="flex items-center gap-2 px-6 py-3 bg-accent text-white font-bold rounded-xl hover:bg-violet-400 transition-colors shadow-lg shadow-accent/20">
               <Rocket className="w-4 h-4" /> Go to Studio
             </Link>
           </div>
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
                  <div className="text-4xl font-extrabold mt-3 text-green-400">{stats.activeUsers.toLocaleString()}</div>
               </div>
               <div className="bg-panel border border-panelBorder rounded-2xl p-6 relative overflow-hidden">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full" />
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 blur-[50px] rounded-full" />
                  <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider relative z-10">System Status</span>
                  <div className="text-xl font-bold mt-4 text-white flex items-center gap-2 relative z-10">
                    <div className={`w-3 h-3 rounded-full ${stats.status === 'Operational' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} /> {stats.status}
@@ -118,13 +118,13 @@ export default function AdminDashboard() {
           ) : (
             <div className="bg-panel border border-panelBorder rounded-2xl p-8 max-w-2xl">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <CreditCard className="w-6 h-6 text-yellow-500" /> Subscription Management
+                <CreditCard className="w-6 h-6 text-violet-400" /> Subscription Management
               </h2>
               <p className="text-gray-400 leading-relaxed mb-6">
                 Stripe Payments have been successfully integrated. 
                 Users who exhaust their free Tokens will be prompted to purchase the $2.00 Pro Package. 
               </p>
-              <div className="p-4 bg-black/40 border border-panelBorder rounded-xl font-mono text-sm text-yellow-200/80">
+              <div className="p-4 bg-black/40 border border-panelBorder rounded-xl font-mono text-sm text-violet-200/80">
                 To sync live purchases, connect a Stripe Webhook to your Vercel deployment endpoint.
               </div>
             </div>

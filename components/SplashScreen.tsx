@@ -30,18 +30,18 @@ export default function SplashScreen() {
       <div className="relative flex flex-col items-center">
         {/* Glowing Moon Logo */}
         <div className="relative mb-6 flex items-center justify-center">
-          <div className="absolute inset-0 bg-yellow-100/20 blur-3xl rounded-full w-32 h-32 scale-150 animate-pulse" />
+          <div className="absolute inset-0 bg-violet-400/20 blur-3xl rounded-full w-32 h-32 scale-150 animate-pulse" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src="/logo.png" 
-            alt="Moonana Logo" 
+            alt="AIJourney Logo" 
             className="w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] z-10" 
           />
         </div>
         
         {/* Title & Branding */}
         <h1 className="text-3xl font-extrabold tracking-widest text-white mb-2 drop-shadow-lg">
-          MOONANA <span className="text-yellow-400 font-light">STUDIO</span>
+          AI<span className="text-violet-400 font-light">JOURNEY</span>
         </h1>
         <p className="text-sm font-medium text-gray-400 tracking-[0.2em] uppercase">
           Initializing Workspace...
@@ -49,7 +49,7 @@ export default function SplashScreen() {
         
         {/* Loading Bar */}
         <div className="w-48 h-1 bg-panelBorder rounded-full mt-8 overflow-hidden">
-          <div className="h-full bg-yellow-400 w-full rounded-full origin-left animate-[splash-progress_0.8s_ease-in-out_forwards]" />
+          <div className="h-full bg-violet-500 w-full rounded-full origin-left animate-[splash-progress_0.8s_ease-in-out_forwards]" />
         </div>
       </div>
 

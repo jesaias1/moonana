@@ -32,13 +32,13 @@ export default async function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
              {/* eslint-disable-next-line @next/next/no-img-element */}
-             <img src="/logo.png" alt="Moonana Studio Logo" className="w-8 h-8 object-contain" />
-             <span className="font-bold tracking-widest text-lg">MOONANA <span className="text-yellow-400 font-light">STUDIO</span></span>
+             <img src="/logo.png" alt="AIJourney Logo" className="w-8 h-8 object-contain" />
+             <span className="font-bold tracking-widest text-lg">AI<span className="text-violet-400 font-light">JOURNEY</span></span>
           </div>
           <div className="flex items-center gap-6 text-sm font-medium">
             <Link href="#features" className="text-gray-400 hover:text-white transition-colors">Features</Link>
             <Link href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link>
-            <Link href="/studio" className="bg-white text-black px-5 py-2 rounded-full hover:bg-yellow-400 hover:scale-105 transition-all shadow-lg font-bold">
+            <Link href="/studio" className="bg-white text-black px-5 py-2 rounded-full hover:bg-violet-400 hover:text-white hover:scale-105 transition-all shadow-lg font-bold">
               Launch Studio
             </Link>
           </div>
@@ -71,7 +71,7 @@ export default async function LandingPage() {
             </div>
             
             <div className="bg-panel/50 border border-panelBorder p-8 rounded-2xl hover:bg-panel transition-colors group">
-              <div className="w-12 h-12 bg-yellow-400/20 rounded-xl flex items-center justify-center mb-6 text-yellow-500 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-violet-400/20 rounded-xl flex items-center justify-center mb-6 text-violet-500 group-hover:scale-110 transition-transform">
                 <Wand2 className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-3">Style Presets & Transfer</h3>
@@ -104,7 +104,7 @@ export default async function LandingPage() {
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
               <div>
-                <h3 className="text-2xl font-bold mb-2">Moonana Tokens <span className="text-accent bg-accent/10 px-2 py-0.5 rounded text-sm ml-2">PRO</span></h3>
+                <h3 className="text-2xl font-bold mb-2">AIJourney Credits <span className="text-accent bg-accent/10 px-2 py-0.5 rounded text-sm ml-2">PRO</span></h3>
                 <p className="text-gray-400 mb-6">Fuel your creativity without subscription traps.</p>
                 <div className="flex flex-col mb-6 text-white bg-white/5 p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
                   <div className="flex items-baseline gap-2 mb-3">
@@ -117,7 +117,7 @@ export default async function LandingPage() {
                   </div>
                 </div>
                 <ul className="space-y-3">
-                  {['High-speed Gemini Flash generations', 'Unlimited local history', 'Custom style presets', 'Composition enforcement tools'].map((feature, i) => (
+                  {['High-quality GPT Image 2 generations', 'Unlimited local history', 'Custom style presets', 'Composition enforcement tools'].map((feature, i) => (
                     <li key={i} className="flex items-center gap-3 text-gray-300">
                       <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">✓</div>
                       {feature}
@@ -129,7 +129,7 @@ export default async function LandingPage() {
               <div className="w-full md:w-auto flex-shrink-0">
                 <Link 
                   href="/studio" 
-                  className="block w-full text-center bg-white text-black px-10 py-5 rounded-2xl font-bold text-lg hover:bg-yellow-400 transition-colors shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:scale-105 transform duration-300"
+                  className="block w-full text-center bg-white text-black px-10 py-5 rounded-2xl font-bold text-lg hover:bg-violet-400 hover:text-white transition-colors shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:scale-105 transform duration-300"
                 >
                   Enter Studio
                 </Link>
@@ -142,7 +142,7 @@ export default async function LandingPage() {
 
       {/* Footer */}
       <footer className="py-8 text-center text-gray-600 border-t border-white/5 relative z-10">
-        <p>© {new Date().getFullYear()} Moonana Studio. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} AIJourney. All rights reserved.</p>
       </footer>
     </div>
   );

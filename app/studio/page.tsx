@@ -80,7 +80,7 @@ export default function Home() {
 
       let compiledReferences = [...baseRefs];
       if (settings.activeCharacterIds.length > 0) {
-         const savedChars = localStorage.getItem('banana_characters');
+         const savedChars = localStorage.getItem('aijourney_characters');
          if (savedChars) {
            const characters: CharacterProfile[] = JSON.parse(savedChars);
            const activeChars = characters.filter(c => settings.activeCharacterIds.includes(c.id));
@@ -102,11 +102,27 @@ export default function Home() {
         references: compiledReferences 
       };
 
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      // Client-side timeout to prevent browser-level "Failed to fetch" errors
+      const CLIENT_TIMEOUT_MS = 180_000; // 3 minutes
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), CLIENT_TIMEOUT_MS);
+
+      let res: Response;
+      try {
+        res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: abortController.signal,
+        });
+      } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof DOMException && fetchErr.name === 'AbortError') {
+          throw new Error('Generation timed out after 3 minutes. Try a simpler prompt, fewer images, or remove reference images.');
+        }
+        throw new Error('Network error — could not reach the server. Check your internet connection and try again.');
+      }
+      clearTimeout(timeoutId);
 
       if (res.status === 402) {
         setShowPaywall(true);
@@ -284,9 +300,9 @@ export default function Home() {
 
           <Link href="/" className="flex items-center group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Moonana Studio Logo" className="hidden md:block w-6 h-6 mr-3 object-contain group-hover:scale-110 transition-transform" />
+            <img src="/logo.png" alt="AIJourney Logo" className="hidden md:block w-6 h-6 mr-3 object-contain group-hover:scale-110 transition-transform" />
             <h1 className="text-sm font-semibold tracking-wide text-gray-200">
-              Moonana <span className="text-yellow-400">Studio</span>
+              AI<span className="text-violet-400">Journey</span>
             </h1>
           </Link>
 
@@ -294,14 +310,14 @@ export default function Home() {
              {/* Token Balance */}
              <button 
                onClick={() => setShowPaywall(true)}
-               className="hidden sm:flex items-center gap-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-[0_0_10px_rgba(250,204,21,0.1)] hover:shadow-[0_0_15px_rgba(250,204,21,0.2)]"
+                className="hidden sm:flex items-center gap-2 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/20 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-[0_0_10px_rgba(139,92,246,0.1)] hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]"
              >
-               <Zap className="w-4 h-4 fill-yellow-500" />
+                <Zap className="w-4 h-4 fill-violet-400" />
                {tokensRemaining}
              </button>
 
              <div className="hidden sm:block text-xs text-panelBorder px-2 py-1 rounded bg-panel font-mono border border-panelBorder">
-               Model: gemini-3.1-flash-image-preview
+               Model: gpt-image-2
              </div>
              
              {/* Profile Account Menu */}
@@ -317,7 +333,7 @@ export default function Home() {
                        {user.email}
                      </div>
                      <Link href="/admin" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
-                       <LayoutDashboard className="w-4 h-4 text-yellow-500" /> Admin Dashboard
+                       <LayoutDashboard className="w-4 h-4 text-violet-400" /> Admin Dashboard
                      </Link>
                      <button onClick={() => { fetch('/api/auth/logout', { method: 'POST' }).then(() => { setUser(null); window.location.reload(); }) }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors">
                        Sign Out

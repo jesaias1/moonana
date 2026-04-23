@@ -23,7 +23,7 @@ export async function verifyToken(token: string) {
 }
 
 export async function getSession() {
-  const session = cookies().get('moonana_session')?.value;
+  const session = cookies().get('aijourney_session')?.value;
   if (!session) return null;
   return await verifyToken(session);
 }

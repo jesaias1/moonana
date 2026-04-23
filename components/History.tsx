@@ -21,7 +21,7 @@ export default function HistoryPanel({ onRestore }: HistoryProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `moonana_generation_${index}.jpg`;
+      a.download = `aijourney_generation_${index}.jpg`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -39,7 +39,7 @@ export default function HistoryPanel({ onRestore }: HistoryProps) {
     // Attempt to pull existing preset from local storage to not overwrite others
     let customPresets = [];
     try {
-      const saved = localStorage.getItem('banana_styles');
+      const saved = localStorage.getItem('aijourney_styles');
       if (saved) customPresets = JSON.parse(saved);
     } catch { /* ignore */ }
 
@@ -57,12 +57,12 @@ export default function HistoryPanel({ onRestore }: HistoryProps) {
     };
 
     customPresets.push(newPreset);
-    localStorage.setItem('banana_styles', JSON.stringify(customPresets));
+    localStorage.setItem('aijourney_styles', JSON.stringify(customPresets));
     alert('Saved as custom preset! Refresh or open styles panel to see it.');
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('banana_history');
+    const saved = localStorage.getItem('aijourney_history');
     if (saved) {
       try { setHistory(JSON.parse(saved)); } catch { /* ignore */ }
     }
@@ -72,7 +72,7 @@ export default function HistoryPanel({ onRestore }: HistoryProps) {
   // but for now, we'll export a helper they can call from page.tsx to trigger a reload.
   useEffect(() => {
     const handleStorageChange = () => {
-      const saved = localStorage.getItem('banana_history');
+      const saved = localStorage.getItem('aijourney_history');
       if (saved) {
         try { setHistory(JSON.parse(saved)); } catch { /* ignore */ }
       }
@@ -164,7 +164,7 @@ export default function HistoryPanel({ onRestore }: HistoryProps) {
 
 // Exported helper to update history from page.tsx
 export const addHistoryEntry = (entry: GenerationHistoryEntry) => {
-  const saved = localStorage.getItem('banana_history');
+  const saved = localStorage.getItem('aijourney_history');
   let history: GenerationHistoryEntry[] = [];
   if (saved) {
     try { history = JSON.parse(saved); } catch { /* ignore */ }
@@ -176,7 +176,7 @@ export const addHistoryEntry = (entry: GenerationHistoryEntry) => {
   let success = false;
   while (!success && newHistory.length > 0) {
     try {
-      localStorage.setItem('banana_history', JSON.stringify(newHistory));
+      localStorage.setItem('aijourney_history', JSON.stringify(newHistory));
       success = true;
     } catch {
       if (newHistory.length === 1) {

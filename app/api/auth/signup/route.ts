@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     // Create session
     const token = await signToken({ id, email, role: isAdmin ? 'admin' : 'user' });
-    cookies().set('moonana_session', token, {
+    cookies().set('aijourney_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

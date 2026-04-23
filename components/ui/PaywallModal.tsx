@@ -23,7 +23,7 @@ export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-panel border border-yellow-500/20 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl shadow-yellow-500/10 relative">
+      <div className="bg-panel border border-violet-500/20 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl shadow-violet-500/10 relative">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors z-10"
@@ -32,9 +32,9 @@ export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
         </button>
 
         {/* Hero Header */}
-        <div className="bg-gradient-to-b from-yellow-500/20 to-transparent p-8 text-center relative">
-          <div className="w-16 h-16 bg-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.5)] rounded-full flex items-center justify-center mx-auto mb-6">
-            <Zap className="w-8 h-8 text-black fill-black" />
+        <div className="bg-gradient-to-b from-violet-500/20 to-transparent p-8 text-center relative">
+          <div className="w-16 h-16 bg-violet-500 shadow-[0_0_30px_rgba(139,92,246,0.5)] rounded-full flex items-center justify-center mx-auto mb-6">
+            <Zap className="w-8 h-8 text-white fill-white" />
           </div>
           <h2 className="text-3xl font-extrabold mb-2">Out of Tokens!</h2>
           <p className="text-gray-400">You&apos;ve used up your free generations.</p>
@@ -43,20 +43,20 @@ export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
         {/* Pricing Content */}
         <div className="px-8 pb-8">
           <div className="bg-background border border-panelBorder rounded-2xl p-6 mb-8 text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full point-events-none" />
-            <div className="text-sm font-bold text-yellow-500 uppercase tracking-widest mb-2">Pro Package</div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 blur-[50px] rounded-full point-events-none" />
+            <div className="text-sm font-bold text-violet-400 uppercase tracking-widest mb-2">Pro Package</div>
             <div className="flex items-baseline justify-center gap-1 mb-4">
               <span className="text-5xl font-black">$5</span>
               <span className="text-gray-400 font-medium">/ 50 Tokens</span>
             </div>
             <ul className="text-sm text-gray-300 space-y-3 mb-6 text-left w-full max-w-[240px] mx-auto">
-              <li className="flex items-center gap-2"><Rocket className="w-4 h-4 text-yellow-500" /> Ultra-fast Gemini 3.1 Flash</li>
-              <li className="flex items-center gap-2"><CreditCard className="w-4 h-4 text-yellow-500" /> Secure one-time payment</li>
+              <li className="flex items-center gap-2"><Rocket className="w-4 h-4 text-violet-400" /> Ultra-quality GPT Image 2</li>
+              <li className="flex items-center gap-2"><CreditCard className="w-4 h-4 text-violet-400" /> Secure one-time payment</li>
             </ul>
 
             <button 
               onClick={handleCheckout}
-              className="w-full bg-yellow-400 text-black font-bold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(250,204,21,0.3)] hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-violet-500 text-white font-bold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:bg-violet-400 transition-colors flex items-center justify-center gap-2"
             >
               Buy 50 Tokens — $5
             </button>

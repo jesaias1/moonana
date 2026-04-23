@@ -17,7 +17,7 @@ export default function PromptBuilder({ settings, onChange }: PromptBuilderProps
   // Fetch character names for preview simply by tracking local storage
   useEffect(() => {
     if (settings.activeCharacterIds.length > 0) {
-      const savedChars = localStorage.getItem('banana_characters');
+      const savedChars = localStorage.getItem('aijourney_characters');
       if (savedChars) {
         try {
           const chars: CharacterProfile[] = JSON.parse(savedChars);
@@ -133,7 +133,7 @@ export default function PromptBuilder({ settings, onChange }: PromptBuilderProps
       {isExpanded && (
         <div className="p-4 pt-0 space-y-3">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-            <p>This is the exact string sent to the Gemini backend.</p>
+            <p>This is the exact string sent to the GPT Image 2 backend.</p>
             {settings.useCompiledPrompt && (
               <button 
                 onClick={resetToAuto}

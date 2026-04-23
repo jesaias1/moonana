@@ -23,7 +23,7 @@ export default function ImageDisplay({ images, isLoading, elapsedMs }: ImageDisp
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `moonana-gen-${Date.now()}-${index + 1}.png`;
+      a.download = `aijourney-gen-${Date.now()}-${index + 1}.png`;
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(blobUrl);
@@ -32,7 +32,7 @@ export default function ImageDisplay({ images, isLoading, elapsedMs }: ImageDisp
       // Fallback for base64 direct download
       const a = document.createElement('a');
       a.href = imgUrl;
-      a.download = `moonana-gen-${Date.now()}-${index + 1}.png`;
+      a.download = `aijourney-gen-${Date.now()}-${index + 1}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -67,7 +67,7 @@ export default function ImageDisplay({ images, isLoading, elapsedMs }: ImageDisp
             <div className="w-16 h-16 border-4 border-panelBorder border-t-accent rounded-full animate-spin" />
             <div className="text-center">
               <h3 className="text-xl font-bold text-white mb-2">Synthesizing Image...</h3>
-              <p className="text-sm text-gray-400">Google Gemini is fusing your prompt with structural composition constraints.</p>
+              <p className="text-sm text-gray-400">GPT Image 2 is synthesizing your prompt with structural composition constraints.</p>
             </div>
             
             {/* Mock Progress Bar */}
@@ -102,7 +102,7 @@ export default function ImageDisplay({ images, isLoading, elapsedMs }: ImageDisp
             <ImageIcon className="w-16 h-16 mb-4 opacity-50 text-gray-400" />
             <h3 className="text-xl font-medium mb-2 text-gray-300">No images generated yet</h3>
             <p className="text-sm text-center max-w-sm line-clamp-2">
-              Enter a prompt below and click generate to invoke Google&apos;s Gemini image model.
+              Enter a prompt below and click generate to invoke OpenAI&apos;s GPT Image 2 model.
             </p>
           </div>
         </div>
